@@ -1,10 +1,9 @@
 # Censeo
-The main propose of this project is to create an application where teachers and students can evaluating their class, and through charts, data and suggestions, find the best way to improve the classes. 
+The main purpose of this project is to create an application where teachers and students can evaluate their classes, and through charts, data and suggestions, find the best way to improve their classes. 
  
-The application will able teachers create a class where he can edit some information about the one, at the finish of the class will be available to the student's some questions about the performance and other characteristics of the class, this questions will be treated and analyzed to create some charts where teachers can see the weakness and stronger points of your classes. Another possibility is the system of suggestion, where the teacher can create topics from which the students of the class, course ou college can suggest solutions for these ones.
+The application will enable teachers to create classes where they can edit the content. In the end of each class, the students will have access to a few questions, regarding the performance and other class characteristics. Those questions will be treated and analyzed in order to create charts, where teachers will be able to see the weakest and the strongest spots in their classes. Another feature is the suggestion system, that allows teachers to create topics for students to suggest solutions for the next classes.
 
-
-The application provides students with a global and individual competition rank for each class, this rank will be feed with the question answered and the suggestions given by the students, other parameters like time to answer the questions since the class was closed and the relevance of suggestions will be used for balancing the points give to the students.
+The app also creates a competitive rank between students, comparing classmates or even the whole institution. This rank will be fed with the answers and suggestions given by the students. Another parameter to evaluate the rank is how fast the students answer the questions after the end of each class. Teachers can also give extra points by the relevance of their suggestions
 
 ## Technology and Links
 
