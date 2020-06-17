@@ -17,7 +17,6 @@ import django_heroku
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
@@ -28,7 +27,6 @@ SECRET_KEY = 'b(j@*1jwa&h9$a(r-o+_ns4)8w0$w(lie&k1z2!98fj&=y#80m'
 DEBUG = True
 
 ALLOWED_HOSTS = []
-
 
 # Application definition
 
@@ -80,7 +78,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'censeo.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
@@ -88,9 +85,13 @@ WSGI_APPLICATION = 'censeo.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'OPTIONS': {
-            'read_default_file':  os.path.join(BASE_DIR, 'my.cnf'),
-        },
+        'HOST': 'k2pdcy98kpcsweia.cbetxkdyhwsb.us-east-1.rds.amazonaws.com',
+        'USER': 'j99byg03w8vtwi1u',
+        'PASSWORD': 'yv5ksx8np83poqlp',
+        'NAME': 'gkg3s66pqqz28mg8',
+        # 'OPTIONS': {
+        # 'read_default_file':  "/home/vitor/Desktop/POC/test.cnf",
+        # },
     }
 }
 
@@ -112,7 +113,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/3.0/topics/i18n/
 
@@ -126,11 +126,8 @@ USE_L10N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
 STATIC_URL = '/static/'
 django_heroku.settings(locals())
-
-
