@@ -14,6 +14,9 @@ class Professor(models.Model):
     senha = models.CharField(max_length=45)
     lattes = models.CharField(max_length=45, blank=True, null=True)
 
+    def __str__(self):
+        return self.nome
+
     class Meta:
         managed = False
         db_table = 'Professor'

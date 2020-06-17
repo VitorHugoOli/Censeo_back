@@ -1,6 +1,5 @@
 from django.db import models
 
-
 # Create your models here.
 from turma.models import Turma
 
@@ -16,6 +15,9 @@ class Aula(models.Model):
     turma_idturma = models.ForeignKey(Turma, models.DO_NOTHING,
                                       db_column='Turma_idTurma')  # Field name made lowercase.
 
+    def __str__(self):
+        return self.turma_idturma.codigo + self.dia_horario.__str__()
+
     class Meta:
         managed = False
         db_table = 'Aula'
@@ -27,6 +29,9 @@ class Prova(models.Model):
     quant_questao = models.CharField(max_length=45, blank=True, null=True)
     aula_idaula = models.ForeignKey(Aula, models.DO_NOTHING, db_column='Aula_idAula')  # Field name made lowercase.
 
+    def __str__(self):
+        return "Prova:" + self.aula_idaula.turma_idturma.codigo + self.aula_idaula.turma_idturma.ano + self.aula_idaula.turma_idturma.semestre + self.aula_idaula.dia_horario.__str__()
+
     class Meta:
         managed = False
         db_table = 'Prova'
@@ -37,6 +42,10 @@ class Teorica(models.Model):
     idteorica = models.IntegerField(db_column='idTeorica', primary_key=True)  # Field name made lowercase.
     conteudo = models.CharField(max_length=45, blank=True, null=True)
     aula_idaula = models.ForeignKey(Aula, models.DO_NOTHING, db_column='Aula_idAula')  # Field name made lowercase.
+
+    def __str__(self):
+        return "Teorica:" + self.aula_idaula.turma_idturma.codigo + self.aula_idaula.turma_idturma.ano + self.aula_idaula.turma_idturma.semestre + self.aula_idaula.dia_horario.__str__()
+
 
     class Meta:
         managed = False
@@ -52,6 +61,10 @@ class TrabalhoPratico(models.Model):
     desenvolvimento_esperado = models.CharField(max_length=45, blank=True, null=True)
     aula_idaula = models.ForeignKey(Aula, models.DO_NOTHING, db_column='Aula_idAula')  # Field name made lowercase.
 
+    def __str__(self):
+        return "TP:" + self.aula_idaula.turma_idturma.codigo + self.aula_idaula.turma_idturma.ano + self.aula_idaula.turma_idturma.semestre + self.aula_idaula.dia_horario.__str__()
+
+
     class Meta:
         managed = False
         db_table = 'Trabalho_Pratico'
@@ -64,6 +77,10 @@ class Excursao(models.Model):
     objetivo = models.CharField(max_length=45, blank=True, null=True)
     atividade = models.CharField(max_length=45, blank=True, null=True)
     aula_idaula = models.ForeignKey(Aula, models.DO_NOTHING, db_column='Aula_idAula')  # Field name made lowercase.
+
+    def __str__(self):
+        return "Excurção:" + self.aula_idaula.turma_idturma.codigo + self.aula_idaula.turma_idturma.ano + self.aula_idaula.turma_idturma.semestre + self.aula_idaula.dia_horario.__str__()
+
 
     class Meta:
         managed = False

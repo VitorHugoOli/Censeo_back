@@ -15,6 +15,9 @@ class Turma(models.Model):
     disciplina_iddisciplina = models.ForeignKey(Disciplina, models.DO_NOTHING,
                                                 db_column='Disciplina_idDisciplina')  # Field name made lowercase.
 
+    def __str__(self):
+        return self.nome+" "+self.codigo+" "+self.ano+" "+self.semestre
+
     class Meta:
         managed = False
         db_table = 'Turma'
@@ -28,6 +31,9 @@ class DiasFixos(models.Model):
     turma_idturma = models.ForeignKey(Turma, models.DO_NOTHING,
                                       db_column='Turma_idTurma')  # Field name made lowercase.
 
+    def __str__(self):
+        return self.turma_idturma.codigo+" "+self.dia+" "+self.horario.__str__()
+
     class Meta:
         managed = False
         db_table = 'Dias_Fixos'
@@ -37,6 +43,9 @@ class DiasFixos(models.Model):
 class TopicaTurma(models.Model):
     idtopica_turma = models.IntegerField(db_column='idTopica_Turma', primary_key=True)  # Field name made lowercase.
     topico = models.CharField(max_length=45, blank=True, null=True)
+
+    def __str__(self):
+        return self.topico
 
     class Meta:
         managed = False
@@ -56,6 +65,9 @@ class SugestaoTurma(models.Model):
                                                     db_column='Topica_Turma_idTopica_Turma')  # Field name made lowercase.
     aluno_idaluno = models.ForeignKey(Aluno, models.DO_NOTHING, db_column='Aluno_idAluno')  # Field name made lowercase.
 
+    def __str__(self):
+        return self.aluno_idaluno.nome+"   Titulo:"+self.titulo
+
     class Meta:
         managed = False
         db_table = 'Sugestao_Turma'
@@ -67,6 +79,9 @@ class ProfessorHasTurma(models.Model):
     turma_idturma = models.ForeignKey(Turma, models.DO_NOTHING,
                                       db_column='Turma_idTurma')  # Field name made lowercase.
 
+    def __str__(self):
+        return self.professor_idprofessor.nome+" "+self.turma_idturma.codigo
+
     class Meta:
         managed = False
         db_table = 'Professor_has_Turma'
@@ -77,6 +92,9 @@ class AlunoHasTurma(models.Model):
                                          primary_key=True)  # Field name made lowercase.
     turma_idturma = models.ForeignKey(Turma, models.DO_NOTHING,
                                       db_column='Turma_idTurma')  # Field name made lowercase.
+
+    def __str__(self):
+        return self.aluno_idaluno.matricula+" "+self.turma_idturma.codigo
 
     class Meta:
         managed = False

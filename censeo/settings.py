@@ -84,23 +84,15 @@ WSGI_APPLICATION = 'censeo.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
-DATABASES = {
-     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'dehpn1qsjocmu0',
-        'USER': 'cbbreqbpcntaqh',
-        'PASSWORD': '2af41c48683f58a83b98cc164a8d2780802d1e8f8259c83b35673db05f1449c7',
-        'HOST': 'ec2-34-197-141-7.compute-1.amazonaws.com',
-        'PORT': '5432',
-    }
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.mysql',
-    #     'OPTIONS': {
-    #         'read_default_file': '/home/vitor/Desktop/POC/my.cnf',
-    #     },
-    # }
-}
 
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'OPTIONS': {
+            'read_default_file':  os.path.join(BASE_DIR, 'my.cnf'),
+        },
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
@@ -140,3 +132,5 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 django_heroku.settings(locals())
+
+

@@ -18,6 +18,9 @@ class Aluno(models.Model):
     curso_idcurso = models.ForeignKey(Curso, models.DO_NOTHING,
                                       db_column='Curso_idCurso')  # Field name made lowercase.
 
+    def __str__(self):
+        return self.nome+" "+self.matricula
+
     class Meta:
         managed = False
         db_table = 'Aluno'
@@ -29,6 +32,9 @@ class Elo(models.Model):
     idelo = models.IntegerField(db_column='idElo', primary_key=True)  # Field name made lowercase.
     tipo = models.CharField(db_column='Tipo', max_length=7, blank=True, null=True)  # Field name made lowercase.
     aluno_idaluno = models.ForeignKey(Aluno, models.DO_NOTHING, db_column='Aluno_idAluno')  # Field name made lowercase.
+
+    def __str__(self):
+        return self.aluno_idaluno.matricula + " " +self.tipo
 
     class Meta:
         managed = False
@@ -44,6 +50,9 @@ class SugestaoCurso(models.Model):
     topico_sugestao_curso_idtopico_sugestao_curso = models.ForeignKey(TopicoSugestaoCurso, models.DO_NOTHING,
                                                                       db_column='Topico_Sugestao_Curso_idTopico_Sugestao_Curso')  # Field name made lowercase.
     aluno_idaluno = models.ForeignKey(Aluno, models.DO_NOTHING, db_column='Aluno_idAluno')  # Field name made lowercase.
+
+    def __str__(self):
+        return "titulo: "+self.titulo
 
     class Meta:
         managed = False

@@ -12,6 +12,10 @@ class Avaliacoes(models.Model):
     aula_idaula = models.ForeignKey(Aula, models.DO_NOTHING, db_column='Aula_idAula')  # Field name made lowercase.
     end_time = models.DateTimeField(blank=True, null=True)
 
+    def __str__(self):
+        return self.aula_idaula.turma_idturma.codigo + self.aula_idaula.dia_horario.__str__() + self.aluno_idaluno.nome
+
+
     class Meta:
         managed = False
         db_table = 'Avaliacoes'
@@ -21,6 +25,10 @@ class Perguntas(models.Model):
     idperguntas = models.IntegerField(db_column='idPerguntas', primary_key=True)  # Field name made lowercase.
     questao = models.CharField(max_length=45, blank=True, null=True)
     tipo_aula = models.CharField(max_length=8, blank=True, null=True)
+
+    def __str__(self):
+        return self.tipo_aula +" : "+self.questao
+
 
     class Meta:
         managed = False
@@ -38,6 +46,9 @@ class Respostas(models.Model):
     perguntas_idperguntas = models.ForeignKey(Perguntas, models.DO_NOTHING,
                                               db_column='Perguntas_idPerguntas')  # Field name made lowercase.
 
+    def __str__(self):
+        return "Resposta "
+
     class Meta:
         managed = False
         db_table = 'Respostas'
@@ -53,6 +64,10 @@ class Caracteristica(models.Model):
     qualificacao = models.CharField(max_length=45, blank=True, null=True)
     perguntas_idperguntas = models.ForeignKey(Perguntas, models.DO_NOTHING,
                                               db_column='Perguntas_idPerguntas')  # Field name made lowercase.
+
+    def __str__(self):
+        return self.qualificacao
+
 
     class Meta:
         managed = False
