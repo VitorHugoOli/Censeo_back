@@ -22,6 +22,7 @@ from professor import views as views_prof
 
 router = routers.DefaultRouter()
 router.register(r'prof', views_prof.ProfessorViewSet)
+router.register(r'login', views_prof.LoginViewSet,basename='login')
 
 urlpatterns = [
     path('', include(router.urls)),

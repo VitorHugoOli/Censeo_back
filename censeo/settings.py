@@ -85,14 +85,20 @@ WSGI_APPLICATION = 'censeo.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'HOST': 'k2pdcy98kpcsweia.cbetxkdyhwsb.us-east-1.rds.amazonaws.com',
-        'USER': 'j99byg03w8vtwi1u',
-        'PASSWORD': 'yv5ksx8np83poqlp',
-        'NAME': 'gkg3s66pqqz28mg8',
+        'HOST': 'censeodatabase.cbq6nkppp2rn.sa-east-1.rds.amazonaws.com',
+        'USER': 'censeo',
+        'PASSWORD': '1c233n42560',
+        'NAME': 'censeo',
         # 'OPTIONS': {
         # 'read_default_file':  "/home/vitor/Desktop/POC/test.cnf",
         # },
     }
+}
+
+REST_FRAMEWORK = {
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+    ]
 }
 
 # Password validation
@@ -111,6 +117,13 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
+]
+
+PASSWORD_HASHERS = [
+    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
+    'django.contrib.auth.hashers.Argon2PasswordHasher',
+    'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
 ]
 
 # Internationalization
