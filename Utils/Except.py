@@ -2,7 +2,7 @@ from django.db import IntegrityError
 from rest_framework.response import Response
 
 
-def verf_integrityerror(ex: IntegrityError):
+def verf_user_integrityerror(ex: IntegrityError):
     if 'email_UNIQUE' in ex.args[1]:
         return Response({'status': False, 'error': "Email repetido, entre com outro."})
     elif 'matricula_UNIQUE' in ex.args[1]:

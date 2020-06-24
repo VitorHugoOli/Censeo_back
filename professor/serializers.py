@@ -4,6 +4,8 @@ from professor.models import Professor
 
 
 class ProfessorSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.IntegerField(source='idprofessor')
+
     class Meta:
         model = Professor
-        fields = ['nome','matricula', 'username', 'email','lattes']
+        fields = ['id','nome','matricula', 'username', 'email','lattes','frist_time']

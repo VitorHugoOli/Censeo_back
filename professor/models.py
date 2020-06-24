@@ -44,7 +44,7 @@ class Professor(models.Model):
             self.set_password(raw_password)
             # Password hash upgrades shouldn't be considered password changes.
             self._password = None
-            self.save(update_fields=["password"])
+            self.save(update_fields=["senha"])
         return check_password(raw_password, self.senha, setter)
 
     class Meta:
