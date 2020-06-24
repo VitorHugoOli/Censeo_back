@@ -15,6 +15,7 @@ class Professor(models.Model):
     username = models.CharField(unique=True, max_length=45, blank=True, null=True)
     email = models.CharField(unique=True, max_length=45)
     senha = models.CharField(max_length=100)
+    frist_time = models.IntegerField(blank=True, null=True)
     lattes = models.CharField(max_length=45, blank=True, null=True)
 
     # Stores the raw password if set_password() is called so that it can
@@ -44,7 +45,7 @@ class Professor(models.Model):
             # Password hash upgrades shouldn't be considered password changes.
             self._password = None
             self.save(update_fields=["password"])
-        return check_password(raw_password, self.password, setter)
+        return check_password(raw_password, self.senha, setter)
 
     class Meta:
         managed = False

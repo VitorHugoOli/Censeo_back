@@ -5,4 +5,3 @@ from curso.models import *
 
 admin.site.register(Curso)
 admin.site.register(Disciplina)
-admin.site.register(TopicoSugestaoCurso)

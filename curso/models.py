@@ -33,17 +33,7 @@ class Disciplina(models.Model):
         managed = False
         db_table = 'Disciplina'
 
-class TopicoSugestaoCurso(models.Model):
-    idtopico_sugestao_curso = models.AutoField(db_column='idTopico_Sugestao_Curso',
-                                               primary_key=True)  # Field name made lowercase.
-    topico = models.CharField(max_length=45, blank=True, null=True)
 
-    def __str__(self):
-        return self.topico
-
-    class Meta:
-        managed = False
-        db_table = 'Topico_Sugestao_Curso'
 
 
 
