@@ -83,20 +83,20 @@ WSGI_APPLICATION = 'censeo.wsgi.application'
 
 
 DATABASES = {
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.mysql',
-    #     'HOST': 'censeodatabase.cbq6nkppp2rn.sa-east-1.rds.amazonaws.com',
-    #     'USER': 'censeo',
-    #     'PASSWORD': '1c233n42560',
-    #     'NAME': 'censeo',
-    #     'OPTIONS': {'ssl': {'ca': 'rds-ca-2019-root.pem'}}
-    # },
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'OPTIONS': {
-            'read_default_file': "/home/vitor/Desktop/POC/test.cnf",
-        },
-    }
+        'HOST': 'censeodatabase.cbq6nkppp2rn.sa-east-1.rds.amazonaws.com',
+        'USER': 'censeo',
+        'PASSWORD': '1c233n42560',
+        'NAME': 'censeo',
+        'OPTIONS': {'ssl': {'ca': 'rds-ca-2019-root.pem'}}
+    },
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.mysql',
+    #     'OPTIONS': {
+    #         'read_default_file': "/home/vitor/Desktop/POC/test.cnf",
+    #     },
+    # }
 }
 
 REST_FRAMEWORK = {
@@ -148,4 +148,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 django_heroku.settings(locals())
-# del DATABASES['default']['OPTIONS']['sslmode']
+
+# This remove the tag sslmode on the default database_url of heroku
+if 'sslmode' in DATABASES['default']['OPTIONS']:
+    del DATABASES['default']['OPTIONS']['sslmode']
