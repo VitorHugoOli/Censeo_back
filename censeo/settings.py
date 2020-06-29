@@ -89,16 +89,18 @@ DATABASES = {
         'USER': 'censeo',
         'PASSWORD': '1c233n42560',
         'NAME': 'censeo',
-        # 'OPTIONS': {
-        # 'read_default_file':  "/home/vitor/Desktop/POC/test.cnf",
-        # },
+    },
+    'other':{
+        'OPTIONS': {
+            'read_default_file':  "/home/vitor/Desktop/POC/test.cnf",
+        },
     }
 }
 
 REST_FRAMEWORK = {
-    'DEFAULT_PARSER_CLASSES': [
-        'rest_framework.parsers.JSONParser',
-    ]
+    # 'DEFAULT_PARSER_CLASSES': [
+    #     'rest_framework.parsers.JSONParser',
+    # ]
 }
 
 # Password validation

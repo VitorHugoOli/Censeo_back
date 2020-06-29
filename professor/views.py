@@ -41,8 +41,9 @@ class ProfessorViewSet(viewsets.ModelViewSet):
         except IntegrityError as ex:
             return verf_user_integrityerror(ex)
         except ValidationError:
+            message = "Sua senha é muito simples. Dicas: Ela tem que ter mais de 8 digitos e não pode conter só numeros"
             return Response({'status': False,
-                             'error': "Sua senha é muito simples. Dicas: Ela tem que ter mais de 8 digitos e não pode conter só numeros"})
+                             'error': message})
         except Exception as ex:
             return generic_except(ex)
 
