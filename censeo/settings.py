@@ -90,11 +90,11 @@ DATABASES = {
         'PASSWORD': '1c233n42560',
         'NAME': 'censeo',
     },
-    'other':{
-        'OPTIONS': {
-            'read_default_file':  "/home/vitor/Desktop/POC/test.cnf",
-        },
-    }
+    # 'other':{
+    #     'OPTIONS': {
+    #         'read_default_file':  "/home/vitor/Desktop/POC/test.cnf",
+    #     },
+    # }
 }
 
 REST_FRAMEWORK = {
