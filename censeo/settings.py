@@ -89,6 +89,7 @@ DATABASES = {
         'USER': 'censeo',
         'PASSWORD': '1c233n42560',
         'NAME': 'censeo',
+        'OPTIONS': {'ssl': {'ca': 'rds-ca-2019-root.pem'}}
     },
     # 'other':{
     #     'OPTIONS': {
