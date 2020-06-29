@@ -83,25 +83,26 @@ WSGI_APPLICATION = 'censeo.wsgi.application'
 
 
 DATABASES = {
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.mysql',
+    #     'HOST': 'censeodatabase.cbq6nkppp2rn.sa-east-1.rds.amazonaws.com',
+    #     'USER': 'censeo',
+    #     'PASSWORD': '1c233n42560',
+    #     'NAME': 'censeo',
+    #     'OPTIONS': {'ssl': {'ca': 'rds-ca-2019-root.pem'}}
+    # },
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'HOST': 'censeodatabase.cbq6nkppp2rn.sa-east-1.rds.amazonaws.com',
-        'USER': 'censeo',
-        'PASSWORD': '1c233n42560',
-        'NAME': 'censeo',
-        'OPTIONS': {'ssl': {'ca': 'rds-ca-2019-root.pem'}}
-    },
-    # 'other':{
-    #     'OPTIONS': {
-    #         'read_default_file':  "/home/vitor/Desktop/POC/test.cnf",
-    #     },
-    # }
+        'OPTIONS': {
+            'read_default_file': "/home/vitor/Desktop/POC/test.cnf",
+        },
+    }
 }
 
 REST_FRAMEWORK = {
-    # 'DEFAULT_PARSER_CLASSES': [
-    #     'rest_framework.parsers.JSONParser',
-    # ]
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+    ]
 }
 
 # Password validation
@@ -147,4 +148,4 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 django_heroku.settings(locals())
-del DATABASES['default']['OPTIONS']['sslmode']
+# del DATABASES['default']['OPTIONS']['sslmode']
