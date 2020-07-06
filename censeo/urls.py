@@ -18,13 +18,15 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework import routers
 
-from aluno import views as views_aluno
 from curso import views as views_curso
+from user import views as views_user
 from professor import views as views_prof
+from aluno import views as views_aluno
 
 router = routers.DefaultRouter()
+router.register(r'user', views_user.UserViewSet)
+router.register(r'login', views_user.LoginViewSet, basename='login')
 router.register(r'prof', views_prof.ProfessorViewSet)
-router.register(r'login', views_prof.LoginViewSet, basename='login')
 router.register(r'curso', views_curso.CursoViewSet)
 router.register(r'aluno', views_aluno.AlunoViewSet)
 

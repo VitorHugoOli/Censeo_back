@@ -38,6 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework.authtoken',
+    'user.apps.UserConfig',
     'professor.apps.ProfessorConfig',
     'curso.apps.CursoConfig',
     'aluno.apps.AlunoConfig',
@@ -46,6 +48,8 @@ INSTALLED_APPS = [
     'aula.apps.AulaConfig',
     'avaliacao.apps.AvaliacaoConfig',
 ]
+
+AUTH_USER_MODEL='user.User'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -83,25 +87,28 @@ WSGI_APPLICATION = 'censeo.wsgi.application'
 
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'HOST': 'censeodatabase.cbq6nkppp2rn.sa-east-1.rds.amazonaws.com',
-        'USER': 'censeo',
-        'PASSWORD': '1c233n42560',
-        'NAME': 'censeo',
-        'OPTIONS': {'ssl': {'ca': 'rds-ca-2019-root.pem'}}
-    },
     # 'default': {
     #     'ENGINE': 'django.db.backends.mysql',
-    #     'OPTIONS': {
-    #         'read_default_file': "/home/vitor/Desktop/POC/test.cnf",
-    #     },
-    # }
+    #     'HOST': 'censeodatabase.cbq6nkppp2rn.sa-east-1.rds.amazonaws.com',
+    #     'USER': 'censeo',
+    #     'PASSWORD': '1c233n42560',
+    #     'NAME': 'censeo',
+    #     'OPTIONS': {'ssl': {'ca': 'rds-ca-2019-root.pem'}}
+    # },
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'OPTIONS': {
+            'read_default_file': "/home/vitor/Desktop/POC/test.cnf",
+        },
+    }
 }
 
 REST_FRAMEWORK = {
     'DEFAULT_PARSER_CLASSES': [
         'rest_framework.parsers.JSONParser',
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
     ]
 }
 

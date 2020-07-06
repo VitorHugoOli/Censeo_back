@@ -1,58 +1,22 @@
-from django.contrib.auth import password_validation
-from django.contrib.auth.hashers import check_password, make_password
 from django.db import models
 
 # Create your models here.
 from curso.models import Curso
+from user.models import User
 
 
 class Aluno(models.Model):
     idaluno = models.AutoField(db_column='idAluno', primary_key=True)  # Field name made lowercase.
-    nome = models.CharField(max_length=45, blank=True, null=True)
-    matricula = models.CharField(unique=True, max_length=45)
-    username = models.CharField(unique=True, max_length=45, blank=True, null=True)
-    email = models.CharField(unique=True, max_length=45)
-    senha = models.CharField(max_length=100)
     xp = models.DecimalField(db_column='XP', max_digits=20, decimal_places=0, blank=True,
                              null=True)  # Field name made lowercase.
-    first_time = models.IntegerField(blank=True, null=True)
     curso_idcurso = models.ForeignKey(Curso, models.DO_NOTHING,
                                       db_column='Curso_idCurso')  # Field name made lowercase.
-
-    # Stores the raw password if set_password() is called so that it can
-    # be passed to password_changed() after the model is saved.
-    _password = None
-
-    def __str__(self):
-        return self.nome + " " + self.matricula
-
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        if self._password is not None:
-            password_validation.password_changed(self._password, self)
-            self._password = None
-
-    def set_password(self, raw_password):
-        self.senha = make_password(raw_password)
-        self._password = raw_password
-
-    def check_password(self, raw_password):
-        """
-        Return a boolean of whether the raw_password was correct. Handles
-        hashing formats behind the scenes.
-        """
-
-        def setter(raw_password):
-            self.set_password(raw_password)
-            # Password hash upgrades shouldn't be considered password changes.
-            self._password = None
-            self.save(update_fields=["senha"])
-
-        return check_password(raw_password, self.senha, setter)
+    user_iduser = models.ForeignKey(User, models.DO_NOTHING, db_column='User_idUser')  # Field name made lowercase.
 
     class Meta:
         managed = False
         db_table = 'Aluno'
+        unique_together = (('idaluno', 'user_iduser'),)
 
 
 class Elo(models.Model):

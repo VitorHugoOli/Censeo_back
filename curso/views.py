@@ -1,7 +1,7 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError
 # Create your views here.
-from rest_framework import viewsets
+from rest_framework import viewsets, permissions
 from rest_framework.response import Response
 
 from Utils.Except import generic_except
@@ -16,8 +16,8 @@ class CursoViewSet(viewsets.ModelViewSet):
     """
     queryset = Curso.objects.all()
     serializer_class = CursoSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
-    # permission_classes = [permissions.IsAuthenticated]
     def create(self, request, *args, **kwargs):
         try:
             data = request.data
