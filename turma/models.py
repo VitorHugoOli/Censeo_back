@@ -1,9 +1,13 @@
 from django.db import models
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
 
-# Create your models here.
 from aluno.models import Aluno
 from curso.models import Disciplina
 from professor.models import Professor
+
+
+# Create your models here.
 
 
 class Turma(models.Model):
@@ -32,6 +36,12 @@ class DiasFixos(models.Model):
 
     def __str__(self):
         return self.turma_idturma.codigo + " " + self.dia + " " + self.horario.__str__()
+
+    def save(self, edit=False, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if not edit:
+            from aula.views import createAulas
+            createAulas(self)
 
     class Meta:
         managed = False
@@ -72,30 +82,39 @@ class SugestaoTurma(models.Model):
 
 
 class ProfessorHasTurma(models.Model):
-    professor_idprofessor = models.OneToOneField(Professor, models.DO_NOTHING, db_column='Professor_idProfessor',
-                                                 primary_key=True)  # Field name made lowercase.
+    professor_idprofessor = models.ForeignKey(Professor, models.DO_NOTHING,
+                                              db_column='Professor_idProfessor')  # Field name made lowercase.
     turma_idturma = models.ForeignKey(Turma, models.DO_NOTHING,
                                       db_column='Turma_idTurma')  # Field name made lowercase.
-
-    def __str__(self):
-        return self.professor_idprofessor.nome + " " + self.turma_idturma.codigo
 
     class Meta:
         managed = False
         db_table = 'Professor_has_Turma'
-        unique_together = (('professor_idprofessor', 'turma_idturma'),)
+        unique_together = (('id', 'professor_idprofessor', 'turma_idturma'),)
+
+    def __str__(self):
+        return self.professor_idprofessor.user_iduser.nome + " " + self.turma_idturma.codigo
 
 
 class AlunoHasTurma(models.Model):
-    aluno_idaluno = models.OneToOneField(Aluno, models.DO_NOTHING, db_column='Aluno_idAluno',
-                                         primary_key=True)  # Field name made lowercase.
+    aluno_idaluno = models.ForeignKey(Aluno, models.DO_NOTHING, db_column='Aluno_idAluno')  # Field name made lowercase.
     turma_idturma = models.ForeignKey(Turma, models.DO_NOTHING,
                                       db_column='Turma_idTurma')  # Field name made lowercase.
-
-    def __str__(self):
-        return self.aluno_idaluno.matricula + " " + self.turma_idturma.codigo
 
     class Meta:
         managed = False
         db_table = 'Aluno_has_Turma'
-        unique_together = (('aluno_idaluno', 'turma_idturma'),)
+        unique_together = (('id', 'aluno_idaluno', 'turma_idturma'),)
+
+    def __str__(self):
+        return self.aluno_idaluno.user_iduser.matricula + " " + self.turma_idturma.codigo
+
+
+@receiver(pre_delete, sender=DiasFixos)
+def delete_image_hook(sender, instance, using, **kwargs):
+    turma = Turma.objects.get(idturma=instance.turma_idturma.idturma)
+    from aula.models import Aula
+    aulas = Aula.objects.filter(turma_idturma=turma, dia_horario__hour=instance.horario.hour,
+                                dia_horario__minute=instance.horario.minute)
+    for i in aulas:
+        i.delete()

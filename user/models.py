@@ -65,7 +65,7 @@ class User(models.Model):
 
     EMAIL_FIELD = 'email'
     USERNAME_FIELD = 'username'
-    REQUIRED_FIELDS = ['email', 'matricula']
+    REQUIRED_FIELDS = ['nome', 'email', 'matricula']
 
     is_active = True
 

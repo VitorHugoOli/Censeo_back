@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from Utils.Except import generic_except
 from curso.models import Curso
 from curso.serializers import CursoSerializer
+from faculdade.models import Faculdade
 from professor.models import Professor
 
 
@@ -25,11 +26,16 @@ class CursoViewSet(viewsets.ModelViewSet):
                 prof = Professor.objects.get(idprofessor=data.get('prof'))
             except ObjectDoesNotExist as ex:
                 prof = None
+            try:
+                facu = Faculdade.objects.get(id=data.get('facu'))
+            except ObjectDoesNotExist as ex:
+                facu = None
 
             curso = Curso(
                 nome=data['name'],
                 codigo=data['codigo'],
-                professor_cordenador=prof,
+                faculdade=facu,
+                professor_coordenador=prof,
             )
             curso.save()
             serializer_context = {

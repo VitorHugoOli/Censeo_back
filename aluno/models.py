@@ -25,7 +25,7 @@ class Elo(models.Model):
     aluno_idaluno = models.ForeignKey(Aluno, models.DO_NOTHING, db_column='Aluno_idAluno')  # Field name made lowercase.
 
     def __str__(self):
-        return self.aluno_idaluno.matricula + " " + self.tipo
+        return self.aluno_idaluno.user_iduser.matricula + " " + self.tipo
 
     class Meta:
         managed = False

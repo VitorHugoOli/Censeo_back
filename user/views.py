@@ -75,47 +75,50 @@ class LoginViewSet(viewsets.ViewSet):
 
     def create(self, request):
         data = request.data
-        login = data['login']
-        password = data['pass']
+        try:
+            login = data['login']
+            password = data['pass']
 
-        def generic_verify(query):
-            try:
-                obj = query()
-                if obj.check_password(password):
-                    context = UserSerializer(obj).data
-                    if obj.tipo_user == "Professor":
-                        context['professor'] = ProfessorSerializer(Professor.objects.get(user_iduser=obj)).data
+            def generic_verify(query):
+                try:
+                    obj = query()
+                    if obj.check_password(password):
+                        context = UserSerializer(obj).data
+                        if obj.tipo_user == "Professor":
+                            context['typeId'] = ProfessorSerializer(Professor.objects.get(user_iduser=obj)).data.get("id")
+                        else:
+                            context['typeId'] = AlunoSerializer(Aluno.objects.get(user_iduser=obj)).data.get("id")
+                        return Response({'status': True, 'user': context})
                     else:
-                        context['aluno'] = AlunoSerializer(Aluno.objects.get(user_iduser=obj)).data
-                    return Response({'status': True, 'user': context})
-                else:
-                    return Response({'status': False, 'error': 'Senha incorreta.'})
-            except ObjectDoesNotExist as ex:
-                return None
-            except Exception as ex:
-                generic_verify(ex)
+                        return Response({'status': False, 'error': 'Senha incorreta.'})
+                except ObjectDoesNotExist as ex:
+                    return None
+                except Exception as ex:
+                    generic_verify(ex)
 
-        def verify_email():
-            return generic_verify(lambda: User.objects.get(email=login))
+            def verify_email():
+                return generic_verify(lambda: User.objects.get(email=login))
 
-        def verify_user_name():
-            return generic_verify(lambda: User.objects.get(username=login))
+            def verify_user_name():
+                return generic_verify(lambda: User.objects.get(username=login))
 
-        def verify_matricula():
-            return generic_verify(lambda: User.objects.get(matricula=login))
+            def verify_matricula():
+                return generic_verify(lambda: User.objects.get(matricula=login))
 
-        if '@' in login:
-            resp = verify_email()
-            if resp:
-                return resp
-            return Response({'status': False, 'error': 'Não foi identificamos nenhum email correspondente.'})
-        elif re.search(r'\d+', login):
-            resp = verify_matricula()
-            if resp:
-                return resp
-            return Response({'status': False, 'error': 'Não foi identificamos nenhuma matricula correspondente.'})
-        else:
-            resp = verify_user_name()
-            if resp:
-                return resp
-            return Response({'status': False, 'error': 'Não foi identificamos nenhum login correspondente.'})
+            if '@' in login:
+                resp = verify_email()
+                if resp:
+                    return resp
+                return Response({'status': False, 'error': 'Nenhum email correspondente.'})
+            elif re.search(r'\d+', login):
+                resp = verify_matricula()
+                if resp:
+                    return resp
+                return Response({'status': False, 'error': 'Nenhuma matricula correspondente.'})
+            else:
+                resp = verify_user_name()
+                if resp:
+                    return resp
+                return Response({'status': False, 'error': 'Nenhum username correspondente.'})
+        except Exception as ex:
+            return generic_except(ex)

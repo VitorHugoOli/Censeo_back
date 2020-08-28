@@ -19,3 +19,12 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'nome', 'matricula', 'username', 'email', 'first_time', 'type', 'token']
+
+
+class UserSerializerWithoutToken(serializers.HyperlinkedModelSerializer):
+    id = serializers.IntegerField(source='iduser')
+    type = serializers.CharField(source='tipo_user')
+
+    class Meta:
+        model = User
+        fields = ['id', 'nome', 'matricula', 'username', 'email', 'first_time', 'type']

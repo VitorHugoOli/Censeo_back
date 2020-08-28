@@ -6,18 +6,20 @@ from turma.models import Turma
 
 class Aula(models.Model):
     idaula = models.AutoField(db_column='idAula', primary_key=True)  # Field name made lowercase.
-    dia_horario = models.DateTimeField(blank=True, null=True)
+    dia_horario = models.DateTimeField()
+    sala = models.CharField(max_length=45, blank=True, null=True)
     tipo_aula = models.CharField(max_length=8, blank=True, null=True)
     tema = models.CharField(max_length=45, blank=True, null=True)
     descricao = models.CharField(max_length=45, blank=True, null=True)
     link_documento = models.CharField(max_length=45, blank=True, null=True)
-    enttime = models.DateTimeField(db_column='entTime', blank=True, null=True)  # Field name made lowercase.
-    is_aberta = models.IntegerField(blank=True, null=True)
+    end_time = models.DateTimeField(blank=True, null=True)
+    is_aberta_class = models.BooleanField()
+    is_aberta_avaliacao = models.BooleanField()
     turma_idturma = models.ForeignKey(Turma, models.DO_NOTHING,
                                       db_column='Turma_idTurma')  # Field name made lowercase.
 
     def __str__(self):
-        return self.turma_idturma.codigo + self.dia_horario.__str__()
+        return self.turma_idturma.codigo + " " + self.dia_horario.__str__()
 
     class Meta:
         managed = False
@@ -32,6 +34,9 @@ class Prova(models.Model):
     def __str__(self):
         return "Prova:" + self.aula_idaula.turma_idturma.codigo + self.aula_idaula.turma_idturma.ano + self.aula_idaula.turma_idturma.semestre + self.aula_idaula.dia_horario.__str__()
 
+    def toDict(self):
+        return {'id': self.idprova, 'quant_questao': self.quant_questao}
+
     class Meta:
         managed = False
         db_table = 'Prova'
@@ -44,6 +49,9 @@ class Teorica(models.Model):
 
     def __str__(self):
         return "Teorica:" + self.aula_idaula.turma_idturma.codigo + self.aula_idaula.turma_idturma.ano + self.aula_idaula.turma_idturma.semestre + self.aula_idaula.dia_horario.__str__()
+
+    def toDict(self):
+        return {'id': self.idteorica}
 
     class Meta:
         managed = False
@@ -60,6 +68,9 @@ class TrabalhoPratico(models.Model):
     def __str__(self):
         return "TP:" + self.aula_idaula.turma_idturma.codigo + self.aula_idaula.turma_idturma.ano + self.aula_idaula.turma_idturma.semestre + self.aula_idaula.dia_horario.__str__()
 
+    def toDict(self):
+        return {'id': self.idtrabalho_pratico, 'quant_membros_grupo': self.quant_membros_grupo}
+
     class Meta:
         managed = False
         db_table = 'Trabalho_Pratico'
@@ -73,6 +84,9 @@ class Excursao(models.Model):
 
     def __str__(self):
         return "Excurção:" + self.aula_idaula.turma_idturma.codigo + self.aula_idaula.turma_idturma.ano + self.aula_idaula.turma_idturma.semestre + self.aula_idaula.dia_horario.__str__()
+
+    def toDict(self):
+        return {'id': self.idexcursao, 'nome_local': self.nome_local}
 
     class Meta:
         managed = False

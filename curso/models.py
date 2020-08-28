@@ -1,6 +1,7 @@
 from django.db import models
 
 # Create your models here.
+from faculdade.models import Faculdade
 from professor.models import Professor
 
 
@@ -8,11 +9,13 @@ class Curso(models.Model):
     idcurso = models.AutoField(db_column='idCurso', primary_key=True)  # Field name made lowercase.
     nome = models.CharField(max_length=45, blank=True, null=True)
     codigo = models.CharField(max_length=45, blank=True, null=True)
-    professor_cordenador = models.ForeignKey(Professor, models.DO_NOTHING, db_column='Professor_cordenador',
-                                             blank=True, null=True)  # Field name made lowercase.
+    professor_coordenador = models.ForeignKey(Professor, models.DO_NOTHING, db_column='Professor_coordenador',
+                                              blank=True, null=True)  # Field name made lowercase.
+    faculdade = models.ForeignKey(Faculdade, models.DO_NOTHING,
+                                  db_column='Faculdade_id')  # Field name made lowercase.
 
     def __str__(self):
-        return self.nome+" "+self.codigo
+        return self.nome + " " + self.codigo
 
     class Meta:
         managed = False
@@ -32,11 +35,3 @@ class Disciplina(models.Model):
     class Meta:
         managed = False
         db_table = 'Disciplina'
-
-
-
-
-
-
-
-

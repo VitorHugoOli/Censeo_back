@@ -1,3 +1,5 @@
+import traceback
+
 from django.db import IntegrityError
 from rest_framework.response import Response
 
@@ -16,5 +18,6 @@ def verf_user_integrityerror(ex: IntegrityError):
 def generic_except(ex: Exception):
     template = "An exception of type {0} occurred. Arguments:\n{1!r}"
     message = template.format(type(ex).__name__, ex.args)
+    print(traceback.format_exc())
     print(message)
-    return Response({'status': False, 'error': "Algo de errado não está certo", 'except': message})
+    return Response({'status': False, 'error': "Algo de errado não está certo", 'except': message},status=400)

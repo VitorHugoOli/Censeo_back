@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from curso.models import Curso
+from curso.models import Curso, Disciplina
 
 
 class CursoSerializer(serializers.HyperlinkedModelSerializer):
@@ -9,3 +9,12 @@ class CursoSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Curso
         fields = ['idcurso', 'nome', 'codigo', 'prof']
+
+
+class DisciplinaSerializer(serializers.HyperlinkedModelSerializer):
+    curso = serializers.PrimaryKeyRelatedField(source="curso_idcurso", read_only=True)
+    id = serializers.IntegerField(source='iddisciplina')
+
+    class Meta:
+        model = Disciplina
+        fields = ['id', 'codigo', 'nome', 'sigla', 'curso']

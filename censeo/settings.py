@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'curso.apps.CursoConfig',
     'aluno.apps.AlunoConfig',
     'faculdade.apps.FaculdadeConfig',
+    'faculdade_sugestao.apps.FaculdadeSugestaoConfig',
     'turma.apps.TurmaConfig',
     'aula.apps.AulaConfig',
     'avaliacao.apps.AvaliacaoConfig',

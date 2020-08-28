@@ -6,18 +6,17 @@ from aula.models import Aula
 
 
 class Avaliacao(models.Model):
-    aluno_idaluno = models.OneToOneField(Aluno, models.DO_NOTHING, db_column='Aluno_idAluno',
-                                         primary_key=True)  # Field name made lowercase.
+    aluno_idaluno = models.ForeignKey(Aluno, models.DO_NOTHING, db_column='Aluno_idAluno')  # Field name made lowercase.
     aula_idaula = models.ForeignKey(Aula, models.DO_NOTHING, db_column='Aula_idAula')  # Field name made lowercase.
-    end_time = models.DateTimeField(blank=True, null=True)
-
-    def __str__(self):
-        return self.aula_idaula.turma_idturma.codigo + self.aula_idaula.dia_horario.__str__() + self.aluno_idaluno.nome
+    end_time = models.CharField(max_length=45, blank=True, null=True)
 
     class Meta:
         managed = False
         db_table = 'Avaliacao'
-        unique_together = (('aluno_idaluno', 'aula_idaula'),)
+        unique_together = (('id', 'aluno_idaluno', 'aula_idaula'),)
+
+    def __str__(self):
+        return self.aula_idaula.turma_idturma.codigo + self.aula_idaula.dia_horario.__str__() + self.aluno_idaluno.user_iduser.nome
 
 
 class Caracteristica(models.Model):
@@ -55,15 +54,19 @@ class Resposta(models.Model):
     resposta_aberta = models.CharField(max_length=45, blank=True, null=True)
     perguntas_idperguntas = models.ForeignKey(Pergunta, models.DO_NOTHING,
                                               db_column='Perguntas_idPerguntas')  # Field name made lowercase.
-    avaliacao_aluno_idaluno = models.ForeignKey(Aluno, models.DO_NOTHING,
-                                                db_column='Avaliacao_Aluno_idAluno')  # Field name made lowercase.
-    avaliacao_aula_idaula = models.ForeignKey(Aula, models.DO_NOTHING,
-                                              db_column='Avaliacao_Aula_idAula')  # Field name made lowercase.
-
-    def __str__(self):
-        return "Resposta "
+    avaliacao = models.ForeignKey(Avaliacao, models.DO_NOTHING, db_column='Avaliacao_id',
+                                  related_name="Avaliacao_id")  # Field name made lowercase.
+    avaliacao_aluno_idaluno = models.ForeignKey(Avaliacao, models.DO_NOTHING,
+                                                db_column='Avaliacao_Aluno_idAluno',
+                                                related_name='Avaliacao_Aluno_idAluno')  # Field name made lowercase.
+    avaliacao_aula_idaula = models.ForeignKey(Avaliacao, models.DO_NOTHING,
+                                              db_column='Avaliacao_Aula_idAula',
+                                              related_name='Avaliacao_Aula_idAula')  # Field name made lowercase.
 
     class Meta:
         managed = False
         db_table = 'Resposta'
         unique_together = (('idrespostas', 'perguntas_idperguntas'),)
+
+    def __str__(self):
+        return "Resposta"
