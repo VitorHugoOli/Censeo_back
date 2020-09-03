@@ -4,16 +4,15 @@ from curso.models import Curso, Disciplina
 
 
 class CursoSerializer(serializers.HyperlinkedModelSerializer):
-    prof = serializers.PrimaryKeyRelatedField(source="professor_cordenador", read_only=True)
+    prof = serializers.PrimaryKeyRelatedField(source="professor_coordenador", read_only=True)
 
     class Meta:
         model = Curso
-        fields = ['idcurso', 'nome', 'codigo', 'prof']
+        fields = ['id', 'nome', 'codigo', 'prof']
 
 
-class DisciplinaSerializer(serializers.HyperlinkedModelSerializer):
-    curso = serializers.PrimaryKeyRelatedField(source="curso_idcurso", read_only=True)
-    id = serializers.IntegerField(source='iddisciplina')
+class DisciplinaSerializer(serializers.ModelSerializer):
+    # curso = serializers.PrimaryKeyRelatedField(source="curso", read_only=True)
 
     class Meta:
         model = Disciplina

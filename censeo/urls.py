@@ -35,6 +35,7 @@ router.register(r'aulas', views_aulas.AulaViewSet)
 router.register(r'turmas', views_turma.TurmaViewSet)
 router.register(r'schedule', views_turma.DiasFixosViewSet)
 router.register(r'sugestoes', views_turma.SugestaoTurmaViewSet)
+router.register(r'topicosTurma', views_turma.TopicaTurmaViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),

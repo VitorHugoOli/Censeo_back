@@ -43,19 +43,19 @@ class UserViewSet(viewsets.ModelViewSet):
             if data['tipo_user'] == 1:
                 prof = Professor(
                     lattes=data.get('lattes'),
-                    user_iduser=user,
+                    user=user,
                 )
                 prof.save()
                 context['prof_id'] = prof.pk
             else:
                 try:
-                    curso = Curso.objects.get(idcurso=data.get('curso'))
+                    curso = Curso.objects.get(id=data.get('curso'))
                 except ObjectDoesNotExist as ex:
                     curso = None
                 aluno = Aluno(
                     xp=0,
                     curso_idcurso=curso,
-                    user_iduser=user
+                    user=user
                 )
                 aluno.save()
                 context['prof_id'] = aluno.pk
@@ -85,16 +85,16 @@ class LoginViewSet(viewsets.ViewSet):
                     if obj.check_password(password):
                         context = UserSerializer(obj).data
                         if obj.tipo_user == "Professor":
-                            context['typeId'] = ProfessorSerializer(Professor.objects.get(user_iduser=obj)).data.get("id")
+                            context['typeId'] = ProfessorSerializer(Professor.objects.get(user=obj)).data.get("id")
                         else:
-                            context['typeId'] = AlunoSerializer(Aluno.objects.get(user_iduser=obj)).data.get("id")
+                            context['typeId'] = AlunoSerializer(Aluno.objects.get(user=obj)).data.get("id")
                         return Response({'status': True, 'user': context})
                     else:
                         return Response({'status': False, 'error': 'Senha incorreta.'})
                 except ObjectDoesNotExist as ex:
                     return None
                 except Exception as ex:
-                    generic_verify(ex)
+                    generic_except(ex)
 
             def verify_email():
                 return generic_verify(lambda: User.objects.get(email=login))

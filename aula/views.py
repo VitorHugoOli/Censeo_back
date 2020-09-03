@@ -37,10 +37,10 @@ class AulaViewSet(viewsets.ModelViewSet):
     @staticmethod
     def createTypeObj(aula, extra, tipo):
         type_build = {
-            'teorica': Teorica(aula_idaula=aula).save,
-            'prova': Prova(aula_idaula=aula, quant_questao=extra).save,
-            'trabalho': TrabalhoPratico(aula_idaula=aula, quant_membros_grupo=extra).save,
-            'excursao': Excursao(aula_idaula=aula, nome_local=extra).save
+            'teorica': Teorica(aula=aula).save,
+            'prova': Prova(aula=aula, quant_questao=extra).save,
+            'trabalho': TrabalhoPratico(aula=aula, quant_membros_grupo=extra).save,
+            'excursao': Excursao(aula=aula, nome_local=extra).save
         }
         type_build[tipo]()
 
@@ -48,13 +48,13 @@ class AulaViewSet(viewsets.ModelViewSet):
         data: dict = request.data
         try:
             if data.__contains__('turmaId'):
-                turma = Turma.objects.get(idturma=data['turmaId'])
+                turma = Turma.objects.get(id=data['turmaId'])
                 aula = Aula(
                     dia_horario=dateutil.parser.parse(data['time']),
                     sala=data['room'],
                     is_aberta_class=0,
                     is_aberta_avaliacao=0,
-                    turma_idturma=turma
+                    turma=turma
                 )
                 aula.save()
                 return Response({'status': True, 'aula': AulaSerializer(aula).data})
@@ -67,13 +67,13 @@ class AulaViewSet(viewsets.ModelViewSet):
         try:
             id_aula = kwargs['pk']
             data: dict = request.data
-            aula = Aula.objects.get(idaula=id_aula)
+            aula = Aula.objects.get(id=id_aula)
             tipo = unidecode.unidecode(data['tipo'].lower())
-            aula_tipo = unidecode.unidecode(aula.tipo_aula.lower())
-            #TODO: POSIBILITAR O USER ALTERAR SOMENTE O CAMPO EXTRA
+            aula_tipo = unidecode.unidecode(aula.tipo_aula.lower() if aula.tipo_aula is not None else '')
+            # TODO: POSIBILITAR O USER ALTERAR SOMENTE O CAMPO EXTRA
             if aula.tipo_aula != tipo:
                 if aula_tipo != '' and aula_tipo is not None:
-                    self.TYPE_OBJ[aula_tipo].objects.get(aula_idaula=aula).delete()
+                    self.TYPE_OBJ[aula_tipo].objects.get(aula=aula).delete()
                 self.createTypeObj(aula, data['extra'], tipo)
             aula.tema = data['tema']
             aula.descricao = data['descricao']
@@ -87,15 +87,15 @@ class AulaViewSet(viewsets.ModelViewSet):
     def destroy(self, request: Request, *args, **kwargs):
         try:
             id_aula = kwargs['pk']
-            aula = Aula.objects.get(idaula=id_aula)
+            aula = Aula.objects.get(id=id_aula)
             if aula.tipo_aula == 'teorica':
-                Teorica.objects.get(aula_idaula=aula).delete()
+                Teorica.objects.get(aula=aula).delete()
             elif aula.tipo_aula == 'prova':
-                Prova.objects.get(aula_idaula=aula).delete()
+                Prova.objects.get(aula=aula).delete()
             elif aula.tipo_aula == 'trabalho':
-                TrabalhoPratico.objects.get(aula_idaula=aula).delete()
+                TrabalhoPratico.objects.get(aula=aula).delete()
             elif aula.tipo_aula == 'excursao':
-                Excursao.objects.get(aula_idaula=aula).delete()
+                Excursao.objects.get(aula=aula).delete()
             aula.delete()
             return Response({'status': True})
         except Exception as ex:
@@ -111,16 +111,15 @@ def retrieve_aula_from_turma(request: Request, id: int):
         'trabalho': TrabalhoPratico,
         'excursao': Excursao
     }
-    turma = Turma.objects.get(idturma=id)
-    aulas = Aula.objects.filter(turma_idturma=turma)
+    turma = Turma.objects.get(id=id)
+    aulas = Aula.objects.filter(turma=turma)
     dictAulas = AulaSerializer(aulas, many=True).data
     aulasJson = json.loads(json.dumps(dictAulas))
     for i in aulasJson:
         tipo = i['tipo_aula']
         if (tipo is not None or tipo != 'teorica') and (type_obj.__contains__(tipo)):
-            obj = type_obj[tipo].objects.get(aula_idaula_id=i['id'])
+            obj = type_obj[tipo].objects.get(aula=i['id'])
             i['extra'] = obj.toDict()
-    print(aulasJson)
     return Response({"status": True, "aulas": aulasJson})
 
 
@@ -131,8 +130,8 @@ def createAulas(dias_fixos: DiasFixos):
     :return:
     '''
     try:
-        periodo_start = dias_fixos.turma_idturma.disciplina_iddisciplina.curso_idcurso.faculdade.periodo_start
-        periodo_end = dias_fixos.turma_idturma.disciplina_iddisciplina.curso_idcurso.faculdade.periodo_end
+        periodo_start = dias_fixos.turma.disciplina.curso.faculdade.periodo_start
+        periodo_end = dias_fixos.turma.disciplina.curso.faculdade.periodo_end
         dayNumber = dayToNumber(dias_fixos.dia)
         if dayNumber != -1:
             delta = periodo_end - periodo_start
@@ -145,7 +144,7 @@ def createAulas(dias_fixos: DiasFixos):
                         is_aberta_class=0,
                         is_aberta_avaliacao=0,
                         sala=dias_fixos.sala,
-                        turma_idturma=dias_fixos.turma_idturma
+                        turma=dias_fixos.turma
                     ).save()
         else:
             raise Exception("Sorry, but the day passed is incorrect day: " + dias_fixos.dia.__str__())
@@ -158,16 +157,16 @@ def createAulas(dias_fixos: DiasFixos):
 def get_professor_class_open(request):
     token = Token.objects.get(key=request.auth)
     user = User.objects.get(pk=token.user.pk)
-    prof = Professor.objects.get(user_iduser=user.iduser)
-    prof_turma = ProfessorHasTurma.objects.filter(professor_idprofessor=prof)
+    prof = Professor.objects.get(user=user)
+    prof_turma = ProfessorHasTurma.objects.filter(professor=prof)
     turmas = []
     for i in prof_turma:
-        turmas.append(i.turma_idturma)
+        turmas.append(i.turma)
     context = {"aulas": []}
     serializer_context = {
         'request': request,
     }
     for i in turmas:
-        aulas = Aula.objects.filter(turma_idturma=i, is_aberta_class=True)
+        aulas = Aula.objects.filter(turma=i, is_aberta_class=True)
         context['aulas'] += SmallAulaSerializer(aulas, many=True, context=serializer_context).data
     return Response({'status': True, **context})

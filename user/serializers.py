@@ -6,7 +6,6 @@ from user.models import User
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
-    id = serializers.IntegerField(source='iduser')
     type = serializers.CharField(source='tipo_user')
 
     @property
@@ -22,7 +21,6 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class UserSerializerWithoutToken(serializers.HyperlinkedModelSerializer):
-    id = serializers.IntegerField(source='iduser')
     type = serializers.CharField(source='tipo_user')
 
     class Meta:

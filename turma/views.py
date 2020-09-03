@@ -14,14 +14,13 @@ from rest_framework.response import Response
 from Utils.Except import generic_except
 from Utils.Parsers import dayToEnum
 from Utils.SetInterval import set_interval
-from aluno.models import Aluno
 from aluno.serializers import AlunoSerializer
 from aula.models import Aula
 from curso.models import Disciplina
 from curso.serializers import DisciplinaSerializer
 from professor.models import Professor
-from turma.models import Turma, DiasFixos, ProfessorHasTurma, AlunoHasTurma, SugestaoTurma
-from turma.serializers import TurmaSerializer, DiasFixosSerializer, SugestaoTurmaSerializer
+from turma.models import Turma, DiasFixos, ProfessorHasTurma, AlunoHasTurma, SugestaoTurma, TopicaTurma
+from turma.serializers import TurmaSerializer, DiasFixosSerializer, SugestaoTurmaSerializer, TopicaTurmaSerializer
 from user.models import User
 
 
@@ -37,16 +36,16 @@ class TurmaViewSet(viewsets.ModelViewSet):
         token = Token.objects.get(key=request.auth)
         user = User.objects.get(pk=token.user.pk)
         if "Professor" == user.tipo_user:
-            prof = Professor.objects.get(user_iduser=user)
-            prof_turmasList = ProfessorHasTurma.objects.filter(professor_idprofessor=prof)
+            prof = Professor.objects.get(user=user)
+            prof_turmasList = ProfessorHasTurma.objects.filter(professor=prof)
             context = {"turmas": []}
             for prof_turma in prof_turmasList:
-                turma: Turma = Turma.objects.get(idturma=prof_turma.turma_idturma.idturma)
+                turma: Turma = Turma.objects.get(id=prof_turma.turma.id)
                 jsonTurma = TurmaSerializer(turma).data
-                disciplina: Disciplina = Disciplina.objects.get(iddisciplina=turma.disciplina_iddisciplina.iddisciplina)
-                jsonTurma["disciplina"] = DisciplinaSerializer(disciplina).data
+                disciplina: Disciplina = Disciplina.objects.get(id=turma.disciplina.id)
+                jsonTurma["disciplina"] = DisciplinaSerializer(disciplina, context={'request': request}).data
                 try:
-                    horarios: DiasFixos = DiasFixos.objects.filter(turma_idturma=turma)
+                    horarios: DiasFixos = DiasFixos.objects.filter(turma=turma)
                     jsonTurma["horarios"] = DiasFixosSerializer(horarios, many=True).data
                 except ObjectDoesNotExist as ex:
                     print(">>> This Class Don't have schedule time yet")
@@ -69,14 +68,14 @@ class DiasFixosViewSet(viewsets.ModelViewSet):
         data: dict = request.data
         try:
             if data.__contains__("idTurma") and data.__contains__("schedules"):
-                turma = Turma.objects.get(idturma=data["idTurma"])
+                turma = Turma.objects.get(id=data["idTurma"])
                 scheduleReceived: list = data['schedules']
                 for i in scheduleReceived:
                     if i.__contains__('id'):
                         if i['id']:
                             if i['id'] > 0:
                                 # Editando
-                                dia = DiasFixos.objects.get(iddias_fixos=i['id'], turma_idturma=turma.idturma)
+                                dia = DiasFixos.objects.get(id=i['id'], turma_id=turma.id)
                                 if i['horario'] is not None:
                                     newTime = dateutil.parser.parse(i['horario'])
                                     date1 = datetime(dia.horario.year, dia.horario.month, dia.horario.day,
@@ -85,7 +84,7 @@ class DiasFixosViewSet(viewsets.ModelViewSet):
                                     date2 = datetime(newTime.year, newTime.month, newTime.day, newTime.hour,
                                                      newTime.minute)
                                     if date1 != date2 or dia.sala != i['sala']:
-                                        aulas = Aula.objects.filter(turma_idturma=turma,
+                                        aulas = Aula.objects.filter(turma=turma,
                                                                     sala=dia.sala,
                                                                     dia_horario__hour=dia.horario.hour,
                                                                     dia_horario__minute=dia.horario.minute)
@@ -110,7 +109,7 @@ class DiasFixosViewSet(viewsets.ModelViewSet):
                         else:
                             # Criando
                             dia = DiasFixos(
-                                turma_idturma=turma,
+                                turma=turma,
                                 dia=dayToEnum(i['dia'][0:3]),
                                 horario=dateutil.parser.parse(i['horario']),
                                 sala=i['sala']
@@ -125,6 +124,23 @@ class DiasFixosViewSet(viewsets.ModelViewSet):
             return generic_except(ex)
 
 
+class TopicaTurmaViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows users to be viewed or edited.
+    """
+    queryset = TopicaTurma.objects.all()
+    serializer_class = TopicaTurmaSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def retrieve(self, request: Request, *args, **kwargs):
+        try:
+            id = kwargs['pk']
+            topicos = TopicaTurma.objects.filter(turma_id=id)
+            return Response({"status": True, 'topicos': self.serializer_class(topicos, many=True).data})
+        except Exception as ex:
+            return generic_except(ex)
+
+
 class SugestaoTurmaViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows users to be viewed or edited.
@@ -135,8 +151,8 @@ class SugestaoTurmaViewSet(viewsets.ModelViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         try:
-            sug = SugestaoTurma.objects.filter(turma_idturma_id=kwargs['pk'])
-            return Response({"status": True,'suguestoes':self.serializer_class(sug).data})
+            sug = SugestaoTurma.objects.filter(topica_turma_turma_id=kwargs['pk'])
+            return Response({"status": True, 'suguestoes': self.serializer_class(sug).data})
         except Exception as ex:
             return generic_except(ex)
 
@@ -145,13 +161,16 @@ class SugestaoTurmaViewSet(viewsets.ModelViewSet):
 @permission_classes([IsAuthenticated])
 def pupils_list(request: Request, id: int):
     try:
-        aluno_turmaList = AlunoHasTurma()
+        alunos = []
+
         try:
-            aluno_turmaList = AlunoHasTurma.objects.get(turma_idturma=id)
+            alunos_turma = AlunoHasTurma.objects.filter(turma_id=id)
         except ObjectDoesNotExist as ex:
             print(">>> Wasn't Possible find the Turma")
             return Response({"status": False, "message": "Não foi possivel achar a turma"})
-        alunos = Aluno.objects.filter(idaluno=aluno_turmaList.aluno_idaluno.idaluno)
+
+        for i in alunos_turma:
+            alunos.append(i.aluno)
         return Response({"status": True, "alunos": AlunoSerializer(alunos, many=True).data})
     except Exception as ex:
         return generic_except(ex)

@@ -2,29 +2,32 @@ from django.db import models
 
 # Create your models here.
 from aluno.models import Aluno
+from faculdade.models import Faculdade
+from user.models import User
 
 
 class TopicoFaculdade(models.Model):
-    idtopico_faculdade = models.AutoField(db_column='idTopico_Faculdade',
-                                          primary_key=True)  # Field name made lowercase.
     topico = models.CharField(max_length=45, blank=True, null=True)
+    faculdade = models.ForeignKey(Faculdade, models.CASCADE, db_column='Faculdade_id')  # Field name made lowercase.
 
     class Meta:
         managed = False
         db_table = 'Topico_Faculdade'
+        unique_together = (('id', 'faculdade'),)
 
 
 class SugestaoFaculdade(models.Model):
-    idsugestao_faculdade = models.AutoField(db_column='idSugestao_Faculdade',
-                                            primary_key=True)  # Field name made lowercase.
     sugestao = models.CharField(max_length=45, blank=True, null=True)
     titulo = models.CharField(max_length=45, blank=True, null=True)
-    relevancia = models.CharField(max_length=15, blank=True, null=True)
-    topico_faculdade_idtopico_faculdade = models.ForeignKey('TopicoFaculdade', models.DO_NOTHING,
-                                                            db_column='Topico_Faculdade_idTopico_Faculdade')  # Field name made lowercase.
-    aluno_idaluno = models.ForeignKey(Aluno, models.DO_NOTHING, db_column='Aluno_idAluno')  # Field name made lowercase.
+    relevancia = models.CharField(max_length=6, blank=True, null=True)
+    topico_faculdade = models.ForeignKey(TopicoFaculdade, models.CASCADE,
+                                         db_column='Topico_Faculdade_id')
+    topico_faculdade_faculdade = models.ForeignKey(Faculdade, models.CASCADE,
+                                                   db_column='Topico_Faculdade_Faculdade_id', related_name='faculdade')
+    aluno = models.ForeignKey(Aluno, models.CASCADE, db_column='Aluno_id')
+    aluno_user = models.ForeignKey(User, models.CASCADE, db_column='Aluno_User_id', related_name='user')
 
     class Meta:
         managed = False
         db_table = 'Sugestao_Faculdade'
-        unique_together = (('idsugestao_faculdade', 'topico_faculdade_idtopico_faculdade', 'aluno_idaluno'),)
+        unique_together = (('id', 'topico_faculdade', 'topico_faculdade_faculdade', 'aluno', 'aluno_user'),)

@@ -23,7 +23,7 @@ class CursoViewSet(viewsets.ModelViewSet):
         try:
             data = request.data
             try:
-                prof = Professor.objects.get(idprofessor=data.get('prof'))
+                prof = Professor.objects.get(id=data.get('prof'))
             except ObjectDoesNotExist as ex:
                 prof = None
             try:

@@ -1,13 +1,11 @@
 from rest_framework import serializers
 
 from professor.models import Professor
-from user.serializers import UserSerializer
 
 
 class ProfessorSerializer(serializers.HyperlinkedModelSerializer):
-    user = serializers.PrimaryKeyRelatedField(source="user_iduser",read_only=True)
-    id = serializers.IntegerField(source='idprofessor')
+    user_u = serializers.PrimaryKeyRelatedField(source="user", read_only=True)
 
     class Meta:
         model = Professor
-        fields = ['id', 'lattes','user']
+        fields = ['id', 'lattes', 'user_u']

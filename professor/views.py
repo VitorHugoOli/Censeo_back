@@ -27,24 +27,24 @@ class ProfessorViewSet(viewsets.ModelViewSet):
 def get_suggestions_categories(request):
     token = Token.objects.get(key=request.auth)
     user = User.objects.get(pk=token.user.pk)
-    prof = Professor.objects.get(user_iduser=user)
+    prof = Professor.objects.get(user=user)
     context: dict = {'categorias': {}}
     try:
         curso = Curso.objects.get(professor_coordenador=prof)
         context['categorias'][curso.codigo] = [
-            {'id': curso.idcurso, 'sigla': curso.codigo, 'nome': curso.nome, 'tipo': 'curso'}]
+            {'id': curso.id, 'sigla': curso.codigo, 'nome': curso.nome, 'tipo': 'curso'}]
     except ObjectDoesNotExist as ex:
         pass
-    prof_turma = ProfessorHasTurma.objects.filter(professor_idprofessor=prof)
+    prof_turma = ProfessorHasTurma.objects.filter(professor=prof)
     turmas = []
     for i in prof_turma:
-        turmas.append(Turma.objects.get(idturma=i.turma_idturma.idturma))
+        turmas.append(Turma.objects.get(id=i.turma.id))
     for i in turmas:
-        disp = Disciplina.objects.get(iddisciplina=i.disciplina_iddisciplina.iddisciplina)
+        disp = Disciplina.objects.get(id=i.disciplina.id)
         if context['categorias'].__contains__(disp.codigo):
             context['categorias'][disp.codigo].append(
-                {'id': i.idturma, 'sigla': disp.sigla, 'nome': disp.nome, 'codigo': i.codigo})
+                {'id': i.id, 'sigla': disp.sigla, 'nome': disp.nome, 'codigo': i.codigo, 'tipo': 'materia'})
         else:
             context['categorias'][disp.codigo] = [
-                {'id': i.idturma, 'sigla': disp.sigla, 'nome': disp.nome, 'codigo': i.codigo}]
+                {'id': i.id, 'sigla': disp.sigla, 'nome': disp.nome, 'codigo': i.codigo, 'tipo': 'materia'}]
     return Response({'status': True, **context})

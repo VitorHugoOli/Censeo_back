@@ -5,9 +5,8 @@ from user.serializers import UserSerializerWithoutToken
 
 
 class AlunoSerializer(serializers.HyperlinkedModelSerializer):
-    user = UserSerializerWithoutToken(source="user_iduser", read_only=True)
+    user = UserSerializerWithoutToken(read_only=True)
     curso = serializers.PrimaryKeyRelatedField(source="curso_idcurso", read_only=True)
-    id = serializers.IntegerField(source='idaluno')
 
     class Meta:
         model = Aluno

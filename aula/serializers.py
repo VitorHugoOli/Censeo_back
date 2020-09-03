@@ -5,8 +5,7 @@ from turma.serializers import TurmaSerializer
 
 
 class SmallAulaSerializer(serializers.HyperlinkedModelSerializer):
-    id = serializers.IntegerField(source='idaula')
-    turma = TurmaSerializer(source='turma_idturma')
+    turma = TurmaSerializer()
 
     class Meta:
         model = Aula
@@ -14,9 +13,8 @@ class SmallAulaSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class AulaSerializer(serializers.HyperlinkedModelSerializer):
-    id = serializers.IntegerField(source='idaula')
     horario = serializers.DateTimeField(source="dia_horario")
-    turma = TurmaSerializer(source='turma_idturma')
+    turma = TurmaSerializer()
 
     class Meta:
         model = Aula

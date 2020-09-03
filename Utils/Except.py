@@ -20,4 +20,4 @@ def generic_except(ex: Exception):
     message = template.format(type(ex).__name__, ex.args)
     print(traceback.format_exc())
     print(message)
-    return Response({'status': False, 'error': "Algo de errado não está certo", 'except': message},status=400)
+    return Response({'status': False, 'error': "Algo de errado não está certo", 'except': message}, status=500)

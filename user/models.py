@@ -53,14 +53,13 @@ class CustomUserManager(BaseUserManager):
 
 
 class User(models.Model):
-    iduser = models.AutoField(db_column='idUser', primary_key=True)  # Field name made lowercase.
     nome = models.CharField(max_length=45, blank=True, null=True)
     username = models.CharField(unique=True, max_length=45, blank=True, null=True)
     matricula = models.CharField(unique=True, max_length=45)
     email = models.CharField(unique=True, max_length=45)
     password = models.CharField(unique=True, max_length=125)
     tipo_user = models.CharField(max_length=9)
-    first_time = models.IntegerField(blank=True, null=True, default=True)
+    first_time = models.IntegerField(default=1, blank=True, null=True)
     is_admin = models.IntegerField(default=0)
 
     EMAIL_FIELD = 'email'
