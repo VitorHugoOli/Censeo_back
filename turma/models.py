@@ -2,6 +2,7 @@ from django.db import models
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 
+from Utils.Enums import tipo_relevancia, tipo_dias
 from aluno.models import Aluno
 from curso.models import Disciplina
 from professor.models import Professor
@@ -26,7 +27,9 @@ class Turma(models.Model):
 
 
 class DiasFixos(models.Model):
-    dia = models.CharField(max_length=3, blank=True, null=True)
+    TIPO_DIA = tipo_dias
+
+    dia = models.CharField(max_length=3, blank=True, null=True, choices=TIPO_DIA)
     horario = models.DateTimeField(blank=True, null=True)
     sala = models.CharField(max_length=45, blank=True, null=True)
     turma = models.ForeignKey(Turma, models.CASCADE, db_column='Turma_id')  # Field name made lowercase.
@@ -60,9 +63,12 @@ class TopicaTurma(models.Model):
 
 
 class SugestaoTurma(models.Model):
+    TIPO_RELEVANCIA = tipo_relevancia
+
     sugestao = models.CharField(max_length=45, blank=True, null=True)
     titulo = models.CharField(max_length=45, blank=True, null=True)
-    relevancia = models.CharField(max_length=15, blank=True, null=True)
+    relevancia = models.CharField(max_length=15, blank=True, null=True, choices=tipo_relevancia)
+    data = models.DateTimeField()
     aluno = models.ForeignKey(Aluno, models.CASCADE, db_column='Aluno_id')  # Field name made lowercase.
     topica_turma = models.ForeignKey(TopicaTurma, models.CASCADE,
                                      db_column='Topica_Turma_id')  # Field name made lowercase.

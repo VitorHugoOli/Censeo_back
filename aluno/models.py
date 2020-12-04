@@ -1,6 +1,7 @@
 from django.db import models
 
 # Create your models here.
+from Utils.Enums import tipo_aula, tipo_relevancia
 from curso.models import Curso
 from user.models import User
 
@@ -42,9 +43,12 @@ class TopicoSugestaoCurso(models.Model):
 
 
 class SugestaoCurso(models.Model):
+    TIPO_RELEVANCIA = tipo_relevancia
+
     sugestao = models.CharField(max_length=45, blank=True, null=True)
     titulo = models.CharField(max_length=45, blank=True, null=True)
-    relevancia = models.CharField(max_length=15, blank=True, null=True)
+    relevancia = models.CharField(max_length=15, blank=True, null=True,choices=tipo_relevancia)
+    data = models.DateTimeField()
     topico_sugestao_curso = models.ForeignKey(TopicoSugestaoCurso, models.CASCADE,
                                               db_column='Topico_Sugestao_Curso_id')  # Field name made lowercase.
     topico_sugestao_curso_curso = models.ForeignKey(Curso, models.CASCADE,

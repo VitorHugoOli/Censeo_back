@@ -21,9 +21,11 @@ from rest_framework import routers
 from aluno import views as views_aluno
 from aula import views as views_aulas
 from curso import views as views_curso
+from faculdade_sugestao import views as views_facu
 from professor import views as views_prof
 from turma import views as views_turma
 from user import views as views_user
+from avaliacao import views as views_aval
 
 router = routers.DefaultRouter()
 router.register(r'user', views_user.UserViewSet)
@@ -34,13 +36,21 @@ router.register(r'aluno', views_aluno.AlunoViewSet)
 router.register(r'aulas', views_aulas.AulaViewSet)
 router.register(r'turmas', views_turma.TurmaViewSet)
 router.register(r'schedule', views_turma.DiasFixosViewSet)
-router.register(r'sugestoes', views_turma.SugestaoTurmaViewSet)
 router.register(r'topicosTurma', views_turma.TopicaTurmaViewSet)
+router.register(r'sugestaoTurma', views_turma.SugestaoTurmaViewSet)
+router.register(r'topicosCurso', views_aluno.TopicoSugestaoCursoViewSet)
+router.register(r'sugestaoCurso', views_aluno.SugestaoCursoViewSet)
+router.register(r'topicosFacu', views_facu.TopicoFaculdadeViewSet)
+router.register(r'sugestaoFacu', views_facu.SugestaoFaculdadeViewSet)
+router.register(r'avaliacao', views_aval.AvaliacaoViewSet)
+router.register(r'resposta', views_aval.RespostaViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
     path('suggestionCategories/', views_prof.get_suggestions_categories),
     path('aulas_abertas/', views_aulas.get_professor_class_open),
+    path('endClass/', views_aulas.put_class_end),
+    path('alunoAulas/', views_aulas.get_aluno_class_open),
     path('aulasTurma/<int:id>', views_aulas.retrieve_aula_from_turma),
     path('turmas/<int:id>/alunos', views_turma.pupils_list),
     path('admin/', admin.site.urls),

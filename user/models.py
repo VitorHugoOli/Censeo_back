@@ -53,12 +53,15 @@ class CustomUserManager(BaseUserManager):
 
 
 class User(models.Model):
+    TIPOUSER = (('Professor', 'Professor'),
+                ('Aluno', 'Aluno'))
+
     nome = models.CharField(max_length=45, blank=True, null=True)
     username = models.CharField(unique=True, max_length=45, blank=True, null=True)
     matricula = models.CharField(unique=True, max_length=45)
     email = models.CharField(unique=True, max_length=45)
     password = models.CharField(unique=True, max_length=125)
-    tipo_user = models.CharField(max_length=9)
+    tipo_user = models.CharField(max_length=9, choices=TIPOUSER)
     first_time = models.IntegerField(default=1, blank=True, null=True)
     is_admin = models.IntegerField(default=0)
 

@@ -1,3 +1,69 @@
-from django.shortcuts import render
-
 # Create your views here.
+from rest_framework import viewsets, permissions
+from rest_framework.request import Request
+from rest_framework.response import Response
+
+from Utils.Except import generic_except
+from faculdade.models import Faculdade
+from faculdade_sugestao.models import TopicoFaculdade, SugestaoFaculdade
+from faculdade_sugestao.serializers import TopicoFaculdadeSerializer, SugestaoFaculdadeSerializer
+
+
+class TopicoFaculdadeViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows users to be viewed or edited.
+    """
+    queryset = TopicoFaculdade.objects.all()
+    serializer_class = TopicoFaculdadeSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def retrieve(self, request: Request, *args, **kwargs):
+        try:
+            id = kwargs['pk']
+            topicos = TopicoFaculdade.objects.filter(faculdade_id=id)
+            return Response({"status": True, 'topicos': self.serializer_class(topicos, many=True).data})
+        except Exception as ex:
+            return generic_except(ex)
+
+    def update(self, request, *args, **kwargs):
+        try:
+            id = kwargs['pk']
+            data = request.data
+            turma = Faculdade.objects.get(id=id)
+            for i in data:
+                if int(i['id']) >= 0:
+                    topico = TopicoFaculdade.objects.get(id=i['id'])
+                    if not topico.topico == i['topico']:
+                        topico.topico = i['topico']
+                        topico.save()
+                else:
+                    TopicoFaculdade(
+                        topico=i['topico'],
+                        turma=turma
+                    ).save()
+            return Response({"status": True})
+        except Exception as ex:
+            return generic_except(ex)
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            TopicoFaculdade.objects.get(id=kwargs['pk']).delete()
+            return Response({"status": True})
+        except Exception as ex:
+            return generic_except(ex)
+
+
+class SugestaoFaculdadeViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows users to be viewed or edited.
+    """
+    queryset = SugestaoFaculdade.objects.all()
+    serializer_class = SugestaoFaculdadeSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def retrieve(self, request, *args, **kwargs):
+        try:
+            sug = SugestaoFaculdade.objects.filter(topico_faculdade_faculdade_id=kwargs['pk'])
+            return Response({"status": True, 'suguestoes': self.serializer_class(sug).data})
+        except Exception as ex:
+            return generic_except(ex)

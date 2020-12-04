@@ -4,6 +4,7 @@ from datetime import timedelta, datetime
 
 import dateutil.parser
 import unidecode as unidecode
+from pytz import timezone
 from rest_framework import viewsets, permissions
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, permission_classes
@@ -13,10 +14,12 @@ from rest_framework.response import Response
 
 from Utils.CalcPeriodos import dayToNumber
 from Utils.Except import generic_except
+from aluno.models import Aluno
 from aula.models import Aula, Prova, Teorica, Excursao, TrabalhoPratico
-from aula.serializers import SmallAulaSerializer, AulaSerializer
+from aula.serializers import AulaSerializer
+from avaliacao.models import Avaliacao
 from professor.models import Professor
-from turma.models import DiasFixos, ProfessorHasTurma, Turma
+from turma.models import DiasFixos, ProfessorHasTurma, Turma, AlunoHasTurma
 from user.models import User
 
 
@@ -67,14 +70,18 @@ class AulaViewSet(viewsets.ModelViewSet):
         try:
             id_aula = kwargs['pk']
             data: dict = request.data
+            print(data)
             aula = Aula.objects.get(id=id_aula)
-            tipo = unidecode.unidecode(data['tipo'].lower())
+            tipo = ''
+            if data.__contains__('tipo'):
+                tipo = unidecode.unidecode(data['tipo'].lower())
             aula_tipo = unidecode.unidecode(aula.tipo_aula.lower() if aula.tipo_aula is not None else '')
-            # TODO: POSIBILITAR O USER ALTERAR SOMENTE O CAMPO EXTRA
-            if aula.tipo_aula != tipo:
+            # TODO: POSIBILITAR O USER ALTERAR SOMENTE O CAMPO EXTRA DE FORMA EFICIENTE
+            if aula.tipo_aula != tipo or (len(data['extra']) > 0 and data['extra'][0] == 'Ȟ'):
                 if aula_tipo != '' and aula_tipo is not None:
                     self.TYPE_OBJ[aula_tipo].objects.get(aula=aula).delete()
-                self.createTypeObj(aula, data['extra'], tipo)
+                if data['extra'] != '':
+                    self.createTypeObj(aula, data['extra'][1:len(data['extra'])], tipo)
             aula.tema = data['tema']
             aula.descricao = data['descricao']
             aula.link_documento = data['link']
@@ -118,8 +125,11 @@ def retrieve_aula_from_turma(request: Request, id: int):
     for i in aulasJson:
         tipo = i['tipo_aula']
         if (tipo is not None or tipo != 'teorica') and (type_obj.__contains__(tipo)):
-            obj = type_obj[tipo].objects.get(aula=i['id'])
-            i['extra'] = obj.toDict()
+            try:
+                obj = type_obj[tipo].objects.get(aula_id=i['id'])
+                i['extra'] = obj.toDict()
+            except:
+                pass
     return Response({"status": True, "aulas": aulasJson})
 
 
@@ -152,6 +162,21 @@ def createAulas(dias_fixos: DiasFixos):
         print(ex.args)
 
 
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def put_class_end(request):
+    try:
+        aula = Aula.objects.get(id=request.data['id'])
+        aula.is_aberta_avaliacao = True
+        aula.is_aberta_class = False
+        diferenca = timezone('America/Sao_Paulo')
+        aula.end_time = datetime.now().astimezone(diferenca)
+        aula.save()
+        return Response({'status': True})
+    except Exception as ex:
+        return generic_except(ex)
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_professor_class_open(request):
@@ -168,5 +193,29 @@ def get_professor_class_open(request):
     }
     for i in turmas:
         aulas = Aula.objects.filter(turma=i, is_aberta_class=True)
-        context['aulas'] += SmallAulaSerializer(aulas, many=True, context=serializer_context).data
+        context['aulas'] += AulaSerializer(aulas, many=True, context=serializer_context).data
     return Response({'status': True, **context})
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_aluno_class_open(request):
+    try:
+        token = Token.objects.get(key=request.auth)
+        user = User.objects.get(pk=token.user.pk)
+        aluno = Aluno.objects.get(user=user)
+        aluno_turma = AlunoHasTurma.objects.filter(aluno=aluno)
+        turmas = []
+        for i in aluno_turma:
+            turmas.append(i.turma)
+        context = {"aulas": []}
+        print(f"Opa  {turmas}")
+        for i in turmas:
+            aulas = Aula.objects.filter(turma=i, is_aberta_class=False, is_aberta_avaliacao=True)
+            for j in aulas:
+                if Avaliacao.objects.filter(aula=j, aluno=aluno, completa=True).count() == 0:
+                    context['aulas'].append(AulaSerializer(j).data)
+        print(context)
+        return Response({'status': True, **context})
+    except Exception as ex:
+        print(ex.args)

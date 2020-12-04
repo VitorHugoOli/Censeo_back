@@ -1,13 +1,16 @@
 from django.db import models
+from Utils.Enums import tipo_aula
 
 # Create your models here.
 from turma.models import Turma
 
 
 class Aula(models.Model):
+    TIPOAULA = tipo_aula
+
     dia_horario = models.DateTimeField()
     sala = models.CharField(max_length=45, blank=True, null=True)
-    tipo_aula = models.CharField(max_length=8, blank=True, null=True)
+    tipo_aula = models.CharField(max_length=8, blank=True, null=True, choices=tipo_aula)
     tema = models.CharField(max_length=45, blank=True, null=True)
     descricao = models.CharField(max_length=45, blank=True, null=True)
     link_documento = models.CharField(max_length=45, blank=True, null=True)

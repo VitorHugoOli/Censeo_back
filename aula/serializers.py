@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from aula.models import Aula
-from turma.serializers import TurmaSerializer
+from turma.serializers import TurmaSerializer, TurmaDisciplinaSerializer
 
 
 class SmallAulaSerializer(serializers.HyperlinkedModelSerializer):
@@ -14,7 +14,7 @@ class SmallAulaSerializer(serializers.HyperlinkedModelSerializer):
 
 class AulaSerializer(serializers.HyperlinkedModelSerializer):
     horario = serializers.DateTimeField(source="dia_horario")
-    turma = TurmaSerializer()
+    turma = TurmaDisciplinaSerializer()
 
     class Meta:
         model = Aula

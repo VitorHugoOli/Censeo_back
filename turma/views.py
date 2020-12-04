@@ -140,6 +140,33 @@ class TopicaTurmaViewSet(viewsets.ModelViewSet):
         except Exception as ex:
             return generic_except(ex)
 
+    def update(self, request, *args, **kwargs):
+        try:
+            id = kwargs['pk']
+            data = request.data
+            turma = Turma.objects.get(id=id)
+            for i in data:
+                if int(i['id']) >= 0:
+                    topico = TopicaTurma.objects.get(id=i['id'])
+                    if not topico.topico == i['topico']:
+                        topico.topico = i['topico']
+                        topico.save()
+                else:
+                    TopicaTurma(
+                        topico=i['topico'],
+                        turma=turma
+                    ).save()
+            return Response({"status": True})
+        except Exception as ex:
+            return generic_except(ex)
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            TopicaTurma.objects.get(id=kwargs['pk']).delete()
+            return Response({"status": True})
+        except Exception as ex:
+            return generic_except(ex)
+
 
 class SugestaoTurmaViewSet(viewsets.ModelViewSet):
     """
@@ -152,7 +179,7 @@ class SugestaoTurmaViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         try:
             sug = SugestaoTurma.objects.filter(topica_turma_turma_id=kwargs['pk'])
-            return Response({"status": True, 'suguestoes': self.serializer_class(sug).data})
+            return Response({"status": True, 'suguestoes': self.serializer_class(sug, many=True).data})
         except Exception as ex:
             return generic_except(ex)
 
@@ -180,9 +207,11 @@ def checkTimeForOpenClass():
     diferenca = timezone('America/Sao_Paulo')
     querry = Aula.objects.all()
     today = datetime.now().astimezone(diferenca)
+    print(today.strftime("%Y:%m:%d"))
     print(today.strftime("%H:%M:%S"))
     aulas = querry.filter(dia_horario__year=today.year, dia_horario__month=today.month, dia_horario__day=today.day,
                           dia_horario__hour=today.hour, dia_horario__minute=today.minute)
+    print(aulas)
     for i in aulas:
         i.is_aberta_class = True
         i.save()

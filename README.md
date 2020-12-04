@@ -24,9 +24,28 @@ The app also creates a competitive rank between students, comparing classmates o
 Use the package manager [pip](https://pip.pypa.io/en/stable/) to install the packages.
 
 ```bash
-pip install django
-pip install requirements.txt
+./install.sh
 ```
+## Fluxo inicial de criação
+- Realizar as migrações no BD
+```bash
+python manage.py makemigrations
+python manage.py migrate
+```
+- Create superuser
+```bash
+python manage.py createsupeeuser
+```
+No painel administrativos ou pelas rotas criadas no postman
+- Create Professor
+- Create Aluno
+- Create Faculdade
+- Create Curso
+- Create Disciplina
+- Create Turma
+- Create Dias Fixos
+- Create Prof Has Turma
+- Create Aluno Has Turma 
 
 ## Configurations
 

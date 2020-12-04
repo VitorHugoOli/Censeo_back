@@ -99,7 +99,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'OPTIONS': {
-            'read_default_file': "/home/vitor/Desktop/POC/test.cnf",
+            'read_default_file': "/home/vitor/Documents/POC/test.cnf",
         },
     }
 }
