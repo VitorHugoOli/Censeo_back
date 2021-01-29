@@ -14,6 +14,7 @@ from rest_framework.response import Response
 from Utils.Except import generic_except
 from Utils.Parsers import dayToEnum
 from Utils.SetInterval import set_interval
+from aluno.models import Aluno
 from aluno.serializers import AlunoSerializer
 from aula.models import Aula
 from curso.models import Disciplina
@@ -178,7 +179,11 @@ class SugestaoTurmaViewSet(viewsets.ModelViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         try:
-            sug = SugestaoTurma.objects.filter(topica_turma_turma_id=kwargs['pk'])
+            if request.user.tipo_user == 'Professor':
+                sug = SugestaoTurma.objects.filter(topica_turma_turma_id=kwargs['pk'])
+            else:
+                aluno = Aluno.objects.get(user=request.user)
+                sug = sug = SugestaoTurma.objects.filter(topica_turma_turma_id=kwargs['pk'], aluno=aluno)
             return Response({"status": True, 'suguestoes': self.serializer_class(sug, many=True).data})
         except Exception as ex:
             return generic_except(ex)
@@ -204,18 +209,18 @@ def pupils_list(request: Request, id: int):
 
 
 def checkTimeForOpenClass():
-    diferenca = timezone('America/Sao_Paulo')
-    querry = Aula.objects.all()
-    today = datetime.now().astimezone(diferenca)
-    print(today.strftime("%Y:%m:%d"))
-    print(today.strftime("%H:%M:%S"))
-    aulas = querry.filter(dia_horario__year=today.year, dia_horario__month=today.month, dia_horario__day=today.day,
-                          dia_horario__hour=today.hour, dia_horario__minute=today.minute)
-    print(aulas)
-    for i in aulas:
-        i.is_aberta_class = True
-        i.save()
-    print("--- checked Class Open")
-
-
-set_interval(checkTimeForOpenClass, 60)
+    print("---> Checking for open class")
+    print(datetime.now())
+    try:
+        diferenca = timezone('America/Sao_Paulo')
+        querry = Aula.objects.all()
+        today = datetime.now().astimezone(diferenca)
+        aulas = querry.filter(dia_horario__year=today.year, dia_horario__month=today.month, dia_horario__day=today.day,
+                              dia_horario__hour=today.hour, dia_horario__minute=today.minute)
+        for i in aulas:
+            i.is_aberta_class = True
+            i.save()
+        print("---> Verification successful")
+    except Exception as ex:
+        print("---x Não foi possivel checar todas as aulas!")
+        print(ex)

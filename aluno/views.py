@@ -1,12 +1,17 @@
 # Create your views here.
+from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import viewsets, permissions
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 
 from Utils.Except import generic_except
 from aluno.models import Aluno, TopicoSugestaoCurso, SugestaoCurso
 from aluno.serializers import AlunoSerializer, TopicoSugestaoCursoSerializer, SugestaoCursoSerializer
-from curso.models import Curso
+from curso.models import Curso, Disciplina
+from faculdade.models import Faculdade
+from turma.models import AlunoHasTurma
 
 
 class AlunoViewSet(viewsets.ModelViewSet):
@@ -37,8 +42,9 @@ class TopicoSugestaoCursoViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         try:
             id = kwargs['pk']
+            print(id)
             data = request.data
-            turma = Curso.objects.get(id=id)
+            curso = Curso.objects.get(id=id)
             for i in data:
                 if int(i['id']) >= 0:
                     topico = TopicoSugestaoCurso.objects.get(id=i['id'])
@@ -48,7 +54,7 @@ class TopicoSugestaoCursoViewSet(viewsets.ModelViewSet):
                 else:
                     TopicoSugestaoCurso(
                         topico=i['topico'],
-                        turma=turma
+                        curso=curso
                     ).save()
             return Response({"status": True})
         except Exception as ex:
@@ -70,10 +76,52 @@ class SugestaoCursoViewSet(viewsets.ModelViewSet):
     serializer_class = SugestaoCursoSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    def create(self, request, *args, **kwargs):
+        data: dict = request.data
+        try:
+            if data.__contains__(''):
+                SugestaoCurso()
+
+            else:
+                return Response({'status': False, 'error': 'Something is missing 👀'})
+        except Exception as ex:
+            return generic_except(ex)
     def retrieve(self, request, *args, **kwargs):
         try:
-            sug = SugestaoCurso.objects.filter(topico_sugestao_curso_id=kwargs['pk'])
-            print(sug)
+            sug: SugestaoCurso
+
+            if request.user.tipo_user == 'Professor':
+                sug = SugestaoCurso.objects.filter(topico_sugestao_curso_id=kwargs['pk'])
+            else:
+                aluno = Aluno.objects.get(user=request.user)
+                sug = SugestaoCurso.objects.filter(topico_sugestao_curso_id=kwargs['pk'], aluno=aluno)
             return Response({"status": True, 'suguestoes': self.serializer_class(sug, many=True).data})
         except Exception as ex:
             return generic_except(ex)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_suggestions_categories(request):
+    aluno = Aluno.objects.get(user=request.user)
+    context: dict = {'categorias': {}}
+
+    try:
+        curso = Curso.objects.get(id=aluno.curso_idcurso.id)
+        context['categorias']['Faculdade'] = [
+            {'id': curso.id, 'sigla': curso.faculdade.sigla, 'nome': curso.faculdade.nome, 'tipo': 'facu'}]
+        context['categorias']['Curso'] = [
+            {'id': curso.id, 'sigla': curso.codigo, 'nome': curso.nome, 'tipo': 'curso'}]
+    except ObjectDoesNotExist as ex:
+        pass
+
+    context['categorias']['Disciplinas'] = []
+    aluno_turma = AlunoHasTurma.objects.filter(aluno=aluno)
+    for i in aluno_turma:
+        turma = i.turma
+        disp = Disciplina.objects.get(id=turma.disciplina.id)
+        context['categorias']['Disciplinas'].append(
+            {'id': turma.id, 'sigla': disp.sigla, 'nome': disp.nome, 'codigo': turma.codigo, 'tipo': 'materia'})
+
+    print(context)
+    return Response({'status': True, **context})

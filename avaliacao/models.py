@@ -7,10 +7,12 @@ from aula.models import Aula
 
 
 class Avaliacao(models.Model):
-    end_time = models.CharField(max_length=45, blank=True, null=True)
+    end_time = models.DateTimeField(blank=True, null=True)
     completa = models.BooleanField(null=False)
     aula = models.ForeignKey(Aula, models.CASCADE, db_column='Aula_id')  # Field name made lowercase.
     aluno = models.ForeignKey(Aluno, models.CASCADE, db_column='Aluno_id')  # Field name made lowercase.
+    pontos = models.DecimalField(max_digits=20, decimal_places=0, blank=True,
+                                 null=True)  # Field name made lowercase.
 
     class Meta:
         managed = False

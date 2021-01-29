@@ -4,6 +4,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from Utils.Except import generic_except
+from aluno.models import Aluno
 from faculdade.models import Faculdade
 from faculdade_sugestao.models import TopicoFaculdade, SugestaoFaculdade
 from faculdade_sugestao.serializers import TopicoFaculdadeSerializer, SugestaoFaculdadeSerializer
@@ -63,7 +64,11 @@ class SugestaoFaculdadeViewSet(viewsets.ModelViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         try:
-            sug = SugestaoFaculdade.objects.filter(topico_faculdade_faculdade_id=kwargs['pk'])
+            if request.user.tipo_user == 'Professor':
+                sug = SugestaoFaculdade.objects.filter(topico_faculdade_faculdade_id=kwargs['pk'])
+            else:
+                aluno = Aluno.objects.get(user=request.user)
+                sug = SugestaoFaculdade.objects.filter(topico_faculdade_faculdade_id=kwargs['pk'], aluno=aluno)
             return Response({"status": True, 'suguestoes': self.serializer_class(sug).data})
         except Exception as ex:
             return generic_except(ex)

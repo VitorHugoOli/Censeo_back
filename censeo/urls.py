@@ -47,7 +47,8 @@ router.register(r'resposta', views_aval.RespostaViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('suggestionCategories/', views_prof.get_suggestions_categories),
+    path('aluno/suggestionCategories', views_aluno.get_suggestions_categories),
+    path('prof/suggestionCategories', views_prof.get_suggestions_categories),
     path('aulas_abertas/', views_aulas.get_professor_class_open),
     path('endClass/', views_aulas.put_class_end),
     path('alunoAulas/', views_aulas.get_aluno_class_open),

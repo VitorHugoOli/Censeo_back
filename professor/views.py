@@ -25,26 +25,25 @@ class ProfessorViewSet(viewsets.ModelViewSet):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_suggestions_categories(request):
-    token = Token.objects.get(key=request.auth)
-    user = User.objects.get(pk=token.user.pk)
-    prof = Professor.objects.get(user=user)
+    prof = Professor.objects.get(user=request.user)
     context: dict = {'categorias': {}}
+
     try:
         curso = Curso.objects.get(professor_coordenador=prof)
         context['categorias'][curso.codigo] = [
             {'id': curso.id, 'sigla': curso.codigo, 'nome': curso.nome, 'tipo': 'curso'}]
     except ObjectDoesNotExist as ex:
         pass
+
     prof_turma = ProfessorHasTurma.objects.filter(professor=prof)
-    turmas = []
     for i in prof_turma:
-        turmas.append(Turma.objects.get(id=i.turma.id))
-    for i in turmas:
-        disp = Disciplina.objects.get(id=i.disciplina.id)
+        turma = i.turma
+        disp = Disciplina.objects.get(id=turma.disciplina.id)
         if context['categorias'].__contains__(disp.codigo):
             context['categorias'][disp.codigo].append(
-                {'id': i.id, 'sigla': disp.sigla, 'nome': disp.nome, 'codigo': i.codigo, 'tipo': 'materia'})
+                {'id': turma.id, 'sigla': disp.sigla, 'nome': disp.nome, 'codigo': turma.codigo, 'tipo': 'materia'})
         else:
             context['categorias'][disp.codigo] = [
-                {'id': i.id, 'sigla': disp.sigla, 'nome': disp.nome, 'codigo': i.codigo, 'tipo': 'materia'}]
+                {'id': turma.id, 'sigla': disp.sigla, 'nome': disp.nome, 'codigo': turma.codigo, 'tipo': 'materia'}]
+
     return Response({'status': True, **context})

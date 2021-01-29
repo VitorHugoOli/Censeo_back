@@ -91,7 +91,7 @@ class ProfessorHasTurma(models.Model):
     class Meta:
         managed = False
         db_table = 'Professor_has_Turma'
-        unique_together = (('id', 'professor', 'turma'),)
+        unique_together = (('professor', 'turma'),)
 
     def __str__(self):
         return self.professor.user.nome + " " + self.turma.codigo
@@ -100,11 +100,12 @@ class ProfessorHasTurma(models.Model):
 class AlunoHasTurma(models.Model):
     aluno = models.ForeignKey(Aluno, models.CASCADE, db_column='Aluno_id')  # Field name made lowercase.
     turma = models.ForeignKey(Turma, models.CASCADE, db_column='Turma_id')  # Field name made lowercase.
+    xp = models.DecimalField(db_column='XP', max_digits=20, decimal_places=0, default=0)  # Field name made lowercase.
 
     class Meta:
         managed = False
         db_table = 'Aluno_has_Turma'
-        unique_together = (('id', 'aluno', 'turma'),)
+        unique_together = (('aluno', 'turma'),)
 
     def __str__(self):
         return self.aluno.user.matricula + " " + self.turma.codigo
