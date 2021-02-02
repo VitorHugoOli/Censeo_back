@@ -1,5 +1,8 @@
 # Create your views here.
+from datetime import datetime
+
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import QuerySet
 from rest_framework import viewsets, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -79,22 +82,33 @@ class SugestaoCursoViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         data: dict = request.data
         try:
-            if data.__contains__(''):
-                SugestaoCurso()
 
+            if 'sugestao' in data and 'titulo' in data:
+                aluno = Aluno.objects.get(user=request.user)
+                topico: TopicoSugestaoCurso = TopicoSugestaoCurso.objects.get(id=data['topico'])
+                SugestaoCurso(
+                    sugestao=data['sugestao'],
+                    titulo=data['titulo'],
+                    data=datetime.today(),
+                    topico=topico,
+                    curso=topico.curso,
+                    aluno=aluno
+                ).save()
             else:
                 return Response({'status': False, 'error': 'Something is missing 👀'})
+            return Response({'status': True})
         except Exception as ex:
             return generic_except(ex)
+
     def retrieve(self, request, *args, **kwargs):
         try:
-            sug: SugestaoCurso
-
+            sug: QuerySet
             if request.user.tipo_user == 'Professor':
-                sug = SugestaoCurso.objects.filter(topico_sugestao_curso_id=kwargs['pk'])
+                sug = SugestaoCurso.objects.filter(curso_id=kwargs['pk'])
             else:
                 aluno = Aluno.objects.get(user=request.user)
-                sug = SugestaoCurso.objects.filter(topico_sugestao_curso_id=kwargs['pk'], aluno=aluno)
+                sug = SugestaoCurso.objects.filter(curso_id=kwargs['pk'], aluno=aluno)
+            sug = sug.order_by('-data')
             return Response({"status": True, 'suguestoes': self.serializer_class(sug, many=True).data})
         except Exception as ex:
             return generic_except(ex)

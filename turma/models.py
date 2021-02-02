@@ -70,15 +70,15 @@ class SugestaoTurma(models.Model):
     relevancia = models.CharField(max_length=15, blank=True, null=True, choices=tipo_relevancia)
     data = models.DateTimeField()
     aluno = models.ForeignKey(Aluno, models.CASCADE, db_column='Aluno_id')  # Field name made lowercase.
-    topica_turma = models.ForeignKey(TopicaTurma, models.CASCADE,
+    topico = models.ForeignKey(TopicaTurma, models.CASCADE,
                                      db_column='Topica_Turma_id')  # Field name made lowercase.
-    topica_turma_turma = models.ForeignKey(Turma, models.CASCADE,
+    turma = models.ForeignKey(Turma, models.CASCADE,
                                            db_column='Topica_Turma_Turma_id')  # Field name made lowercase.
 
     class Meta:
         managed = False
         db_table = 'Sugestao_Turma'
-        unique_together = (('id', 'aluno', 'topica_turma', 'topica_turma_turma'),)
+        unique_together = (('id', 'aluno', 'topico', 'turma'),)
 
     def __str__(self):
         return self.aluno.user.nome + "   Titulo:" + self.titulo

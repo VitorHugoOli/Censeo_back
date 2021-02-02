@@ -7,4 +7,5 @@ admin.site.register(Aluno)
 admin.site.register(Elo)
 admin.site.register(TopicoSugestaoCurso)
 admin.site.register(SugestaoCurso)
+admin.site.register(StrikeDia)
 

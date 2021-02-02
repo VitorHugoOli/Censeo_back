@@ -17,6 +17,7 @@ class Aula(models.Model):
     end_time = models.DateTimeField(blank=True, null=True)
     is_aberta_avaliacao = models.BooleanField(blank=True, null=True)
     is_aberta_class = models.BooleanField(blank=True, null=True)
+    is_assincrona = models.BooleanField(default=0)
     turma = models.ForeignKey(Turma, models.CASCADE, db_column='Turma_id')  # Field name made lowercase.
 
     class Meta:

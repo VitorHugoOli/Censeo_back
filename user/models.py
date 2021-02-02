@@ -62,8 +62,8 @@ class User(models.Model):
     email = models.CharField(unique=True, max_length=45)
     password = models.CharField(unique=True, max_length=125)
     tipo_user = models.CharField(max_length=9, choices=TIPOUSER)
-    first_time = models.IntegerField(default=1, blank=True, null=True)
-    is_admin = models.IntegerField(default=0)
+    first_time = models.BooleanField(default=1, blank=True, null=True)
+    is_admin = models.BooleanField(default=0)
 
     EMAIL_FIELD = 'email'
     USERNAME_FIELD = 'username'

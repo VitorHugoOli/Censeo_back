@@ -72,7 +72,6 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 class LoginViewSet(viewsets.ViewSet):
-
     def create(self, request):
         data = request.data
         try:
@@ -88,6 +87,8 @@ class LoginViewSet(viewsets.ViewSet):
                             context['typeId'] = ProfessorSerializer(Professor.objects.get(user=obj)).data.get("id")
                         else:
                             context['typeId'] = AlunoSerializer(Aluno.objects.get(user=obj)).data.get("id")
+                            context['perfilPhoto'] = AlunoSerializer(Aluno.objects.get(user=obj)).data.get(
+                                "perfilPhoto")
                         return Response({'status': True, 'user': context})
                     else:
                         return Response({'status': False, 'error': 'Senha incorreta.'})

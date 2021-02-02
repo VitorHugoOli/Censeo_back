@@ -1,4 +1,6 @@
 # Create your views here.
+from datetime import datetime
+
 from rest_framework import viewsets, permissions
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -62,13 +64,37 @@ class SugestaoFaculdadeViewSet(viewsets.ModelViewSet):
     serializer_class = SugestaoFaculdadeSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    def create(self, request, *args, **kwargs):
+        data: dict = request.data
+        try:
+
+            if 'sugestao' in data and 'titulo' in data:
+                aluno = Aluno.objects.get(user=request.user)
+                topico: TopicoFaculdade = TopicoFaculdade.objects.get(id=data['topico'])
+                SugestaoFaculdade(
+                    sugestao=data['sugestao'],
+                    titulo=data['titulo'],
+                    data=datetime.today(),
+                    topico=topico,
+                    faculdade=topico.faculdade,
+                    aluno=aluno,
+                    user=aluno.user
+                ).save()
+            else:
+                return Response({'status': False, 'error': 'Something is missing 👀'})
+            return Response({'status': True})
+        except Exception as ex:
+            return generic_except(ex)
+
     def retrieve(self, request, *args, **kwargs):
         try:
             if request.user.tipo_user == 'Professor':
-                sug = SugestaoFaculdade.objects.filter(topico_faculdade_faculdade_id=kwargs['pk'])
+                sug = SugestaoFaculdade.objects.filter(faculdade_id=kwargs['pk'])
             else:
                 aluno = Aluno.objects.get(user=request.user)
-                sug = SugestaoFaculdade.objects.filter(topico_faculdade_faculdade_id=kwargs['pk'], aluno=aluno)
-            return Response({"status": True, 'suguestoes': self.serializer_class(sug).data})
+                sug = SugestaoFaculdade.objects.filter(faculdade_id=kwargs['pk'], aluno=aluno)
+            sug = sug.order_by('-data')
+
+            return Response({"status": True, 'suguestoes': self.serializer_class(sug, many=True).data})
         except Exception as ex:
             return generic_except(ex)

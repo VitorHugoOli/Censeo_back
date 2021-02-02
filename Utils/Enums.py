@@ -1,5 +1,4 @@
 tipo_aula = (
-    ('null', 'null'),
     ('teorica', 'teorica'),
     ('prova', 'prova'),
     ('trabalho', 'trabalho'),
@@ -40,4 +39,10 @@ tipo_resposta = (
     ('binario', 'binario'),
     ('qualificativa', 'qualificativa'),
     ('aberta', 'aberta')
+)
+
+tipo_strike = (
+    ('fire', 'fire'),
+    ('cold_fire', 'cold_fire'),
+    ('snow', 'snow')
 )

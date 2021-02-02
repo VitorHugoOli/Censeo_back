@@ -24,14 +24,14 @@ class SugestaoFaculdade(models.Model):
     titulo = models.CharField(max_length=45, blank=True, null=True)
     relevancia = models.CharField(max_length=6, blank=True, null=True, choices=tipo_relevancia)
     data = models.DateTimeField()
-    topico_faculdade = models.ForeignKey(TopicoFaculdade, models.CASCADE,
-                                         db_column='Topico_Faculdade_id')
-    topico_faculdade_faculdade = models.ForeignKey(Faculdade, models.CASCADE,
-                                                   db_column='Topico_Faculdade_Faculdade_id', related_name='faculdade')
+    topico = models.ForeignKey(TopicoFaculdade, models.CASCADE,
+                               db_column='Topico_Faculdade_id')
+    faculdade = models.ForeignKey(Faculdade, models.CASCADE,
+                                  db_column='Topico_Faculdade_Faculdade_id', related_name='faculdade')
     aluno = models.ForeignKey(Aluno, models.CASCADE, db_column='Aluno_id')
-    aluno_user = models.ForeignKey(User, models.CASCADE, db_column='Aluno_User_id', related_name='user')
+    user = models.ForeignKey(User, models.CASCADE, db_column='Aluno_User_id', related_name='user')
 
     class Meta:
         managed = False
         db_table = 'Sugestao_Faculdade'
-        unique_together = (('id', 'topico_faculdade', 'topico_faculdade_faculdade', 'aluno', 'aluno_user'),)
+        unique_together = (('id', 'topico', 'faculdade', 'aluno', 'aluno'),)

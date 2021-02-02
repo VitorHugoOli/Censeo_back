@@ -1,7 +1,7 @@
 from django.db import models
 
 # Create your models here.
-from Utils.Enums import tipo_aula, tipo_relevancia
+from Utils.Enums import tipo_aula, tipo_relevancia, tipo_strike
 from curso.models import Curso
 from user.models import User
 
@@ -47,18 +47,31 @@ class SugestaoCurso(models.Model):
 
     sugestao = models.CharField(max_length=45, blank=True, null=True)
     titulo = models.CharField(max_length=45, blank=True, null=True)
-    relevancia = models.CharField(max_length=15, blank=True, null=True,choices=tipo_relevancia)
+    relevancia = models.CharField(max_length=15, blank=True, null=True, choices=tipo_relevancia)
     data = models.DateTimeField()
-    topico_sugestao_curso = models.ForeignKey(TopicoSugestaoCurso, models.CASCADE,
+    topico = models.ForeignKey(TopicoSugestaoCurso, models.CASCADE,
                                               db_column='Topico_Sugestao_Curso_id')  # Field name made lowercase.
-    topico_sugestao_curso_curso = models.ForeignKey(Curso, models.CASCADE,
-                                                    db_column='Topico_Sugestao_Curso_Curso_id')  # Field name made lowercase.
+    curso = models.ForeignKey(Curso, models.CASCADE,
+                              db_column='Topico_Sugestao_Curso_Curso_id')  # Field name made lowercase.
     aluno = models.ForeignKey(Aluno, models.CASCADE, db_column='Aluno_id')  # Field name made lowercase.
 
     class Meta:
         managed = False
         db_table = 'Sugestao_Curso'
-        unique_together = (('id', 'topico_sugestao_curso', 'topico_sugestao_curso_curso', 'aluno'),)
+        unique_together = (('id', 'topico', 'curso', 'aluno'),)
 
     def __str__(self):
         return "titulo: " + self.titulo
+
+
+class StrikeDia(models.Model):
+    TIPO_STRIKE = tipo_strike
+
+    strike = models.CharField(max_length=9, blank=True, null=True, choices=tipo_strike)
+    date = models.DateField()
+    aluno = models.ForeignKey(Aluno, models.DO_NOTHING, db_column='Aluno_id')  # Field name made lowercase.
+
+    class Meta:
+        managed = False
+        db_table = 'Strike_Dia'
+        unique_together = (('id', 'aluno'),)

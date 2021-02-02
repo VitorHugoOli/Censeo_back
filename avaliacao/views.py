@@ -12,10 +12,11 @@ from rest_framework.response import Response
 
 from Utils.Except import generic_except
 from Utils.Pontos import PONTOS_AULA
-from aluno.models import Aluno
+from aluno.models import Aluno, StrikeDia
 from aula.models import Aula
 from avaliacao.models import Avaliacao, Pergunta, Resposta
 from avaliacao.serializers import AvaliacaoSerializer, PerguntaSerializer, RespostaSerializer
+from avatar.models import AvatarHasAluno, Avatar
 from turma.models import AlunoHasTurma, Turma
 from user.models import User
 
@@ -115,15 +116,20 @@ class RespostaViewSet(viewsets.ModelViewSet):
                     aval.end_time = timezone.now()
                     aval.completa = True
 
-                    aluno_turma = AlunoHasTurma.objects.get(aluno=aval.aluno, turma=aval.aula.turma)
-                    aluno_turma.xp += decimal.Decimal(CalcAvalPontuacao(aval.aula.end_time, aval.end_time))
-
-                    aluno = Aluno.objects.get(id=aval.aluno.id)
-                    aluno.xp += aluno_turma.xp
-
-                    aluno.save()
-                    aluno_turma.save()
+                    if aval.aula.is_assincrona is False:
+                        aval.pontos = decimal.Decimal(CalcAvalPontuacao(aval.aula.end_time, aval.end_time))
+                    else:
+                        aval.pontos = 25
                     aval.save()
+
+                    aluno_turma = AlunoHasTurma.objects.get(aluno=aval.aluno, turma=aval.aula.turma)
+                    aluno_turma.xp += aval.pontos
+                    aluno_turma.save()
+
+                    if aval.aula.is_assincrona is False:
+                        aluno = Aluno.objects.get(id=aval.aluno.id)
+                        aluno.xp += aluno_turma.xp
+                        aluno.save()
 
                 return Response({'status': True})
             else:
@@ -145,19 +151,16 @@ def CalcAvalPontuacao(end_aula: datetime, end_aval: datetime):
 
 
 def CalcPontuacaoDia(aluno):
-    today = datetime.today() - timedelta(2)
-    avals: QuerySet[Avaliacao] = Avaliacao.objects.filter(end_time__date=today,
-                                                          aluno=aluno,
+    today = datetime.today()
+    turmas = AlunoHasTurma.objects.filter(aluno=aluno).values('turma')
+    aulas = Aula.objects.filter(end_time__date=today, turma__in=turmas, is_assincrona=False, is_aberta_avaliacao=True)
+    avals: QuerySet[Avaliacao] = Avaliacao.objects.filter(aluno=aluno,
+                                                          aula__in=aulas,
                                                           completa=True)
-    print(avals)
-    avg: decimal.Decimal = avals.aggregate(Avg("pontos"))['pontos__avg']
-
-    # if avg > 20:
-    #     print("Fogo")
-    # elif avg > 10:
-    #     print("medio")
-    # else:
-    #     print("Snow")
+    if len(aulas) != 0:
+        avg: decimal.Decimal = avals.aggregate(Sum("pontos"))['pontos__sum'] / len(aulas)
+    else:
+        return -1  # Não houve aulas
 
     return avg
 
@@ -166,10 +169,15 @@ def CalcWonWeekRewards(aluno):
     today = datetime.today()
     startWeek = today - timedelta(7)
 
-    avals = Avaliacao.objects.filter(end_time__gte=startWeek,
-                                     aluno=aluno)
+    turmas = AlunoHasTurma.objects.filter(aluno=aluno).values('turma')
+    aulas = Aula.objects.filter(end_time__gte=startWeek, turma__in=turmas, is_aberta_avaliacao=True)
+    avals = Avaliacao.objects.filter(aula__in=aulas, completa=True, aluno=aluno)
 
-    avg: decimal.Decimal = avals.aggregate(Avg("pontos"))['pontos__avg']
+    avg = avals.aggregate(Sum("pontos"))['pontos__sum'] / len(aulas)
+    if avg is None:
+        return 0
+    else:
+        return float(avg)
 
     # if avg == 25:
     #     print('shine')
@@ -177,8 +185,6 @@ def CalcWonWeekRewards(aluno):
     #     print('normal')
     # else
     #     print('nothing')
-
-    return avg
 
 
 def CalcGeneralRank():
@@ -206,25 +212,55 @@ def CalcRankTurma(turma: Turma):
 def weekRoutine():
     alunos = Aluno.objects.all()
     for i in alunos:
-        CalcPontuacaoDia(i)
+        pontos = CalcPontuacaoDia(i)
+        if pontos == -1:
+            StrikeDia(
+                date=datetime.today(),
+                aluno=i
+            ).save()
+            return
+        strike = ''
+        if pontos > 20:
+            strike = 'fire'
+        elif pontos > 10:
+            strike = 'cold_fire'
+        else:
+            strike = 'snow'
+        StrikeDia.objects.create(
+            strike=strike,
+            date=datetime.today(),
+            aluno=i
+        )
 
 
 def rewardsRoutine():
+    print("--> Start Week Rewards")
     today = datetime.now()
-    # avatar_shiny = Avatar.object.get(date__date=today, isShiny=True)
-    # avatar = Avatar.object.get(date__date=today, isShiny=False)
-    # if len(avatares) > 0:
-    #     alunos = Aluno.objects.all()
-    #     for i in alunos:
-    #         pontos = CalcWonWeekRewards(i)
-    #         if pontos == 25:
-    #             AvatarHasAluno(
-    #                 avatar=avatar_shiny,
-    #                 aluno=i
-    #             ).save()
-    #
-    #         if 20 <= pontos < 25:
-    #             AvatarHasAluno(
-    #                 avatar=avatar,
-    #                 aluno=i
-    #             ).save()
+    avatar_shiny = None
+    avatar = None
+    try:
+        avatar = Avatar.objects.get(date=today, is_shiny=False)
+    except Avatar.DoesNotExist as ex:
+        print(ex)
+    try:
+        avatar_shiny = Avatar.objects.get(date=today, is_shiny=True)
+    except Avatar.DoesNotExist as ex:
+        print(ex)
+
+    if avatar is not None or avatar_shiny is not None:
+        alunos = Aluno.objects.all()
+        for i in alunos:
+            pontos = CalcWonWeekRewards(i)
+            print(f"pontos-> {pontos}")
+            if pontos == 25.0 and avatar_shiny is not None:
+                AvatarHasAluno(
+                    avatar=avatar_shiny,
+                    aluno=i
+                ).save()
+
+            if 20.0 >= pontos and avatar is not None:
+                AvatarHasAluno(
+                    avatar=avatar,
+                    aluno=i
+                ).save()
+    print("--> Week Rewards successful")

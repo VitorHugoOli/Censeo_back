@@ -3,6 +3,7 @@ from datetime import datetime
 
 import dateutil.parser
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import QuerySet
 from pytz import timezone
 from rest_framework import viewsets, permissions
 from rest_framework.authtoken.models import Token
@@ -177,14 +178,38 @@ class SugestaoTurmaViewSet(viewsets.ModelViewSet):
     serializer_class = SugestaoTurmaSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    def create(self, request, *args, **kwargs):
+        data: dict = request.data
+        try:
+
+            if 'sugestao' in data and 'titulo' in data:
+                aluno = Aluno.objects.get(user=request.user)
+                topico: TopicaTurma = TopicaTurma.objects.get(id=data['topico'])
+                SugestaoTurma(
+                    sugestao=data['sugestao'],
+                    titulo=data['titulo'],
+                    data=datetime.today(),
+                    topico=topico,
+                    turma=topico.turma,
+                    aluno=aluno
+                ).save()
+            else:
+                return Response({'status': False, 'error': 'Something is missing 👀'})
+            return Response({'status': True})
+        except Exception as ex:
+            return generic_except(ex)
+
     def retrieve(self, request, *args, **kwargs):
         try:
             if request.user.tipo_user == 'Professor':
-                sug = SugestaoTurma.objects.filter(topica_turma_turma_id=kwargs['pk'])
+                sug = SugestaoTurma.objects.filter(turma=kwargs['pk'])
             else:
                 aluno = Aluno.objects.get(user=request.user)
-                sug = sug = SugestaoTurma.objects.filter(topica_turma_turma_id=kwargs['pk'], aluno=aluno)
-            return Response({"status": True, 'suguestoes': self.serializer_class(sug, many=True).data})
+                sug = SugestaoTurma.objects.filter(turma=kwargs['pk'], aluno=aluno)
+            sug = sug.order_by('-data')
+
+            return Response({"status": True,
+                             'suguestoes': self.serializer_class(sug, many=True).data})
         except Exception as ex:
             return generic_except(ex)
 
@@ -215,10 +240,14 @@ def checkTimeForOpenClass():
         diferenca = timezone('America/Sao_Paulo')
         querry = Aula.objects.all()
         today = datetime.now().astimezone(diferenca)
-        aulas = querry.filter(dia_horario__year=today.year, dia_horario__month=today.month, dia_horario__day=today.day,
-                              dia_horario__hour=today.hour, dia_horario__minute=today.minute)
+        aulas: QuerySet[Aula] = querry.filter(dia_horario__year=today.year, dia_horario__month=today.month,
+                                              dia_horario__day=today.day,
+                                              dia_horario__hour=today.hour, dia_horario__minute=today.minute)
         for i in aulas:
-            i.is_aberta_class = True
+            if i.is_assincrona:
+                i.is_aberta_avaliacao = True
+            else:
+                i.is_aberta_class = True
             i.save()
         print("---> Verification successful")
     except Exception as ex:

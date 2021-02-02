@@ -9,7 +9,7 @@ class SmallAulaSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Aula
-        fields = ["id", "dia_horario", 'sala', 'turma']
+        fields = ["id", "dia_horario", 'sala', 'turma', ]
 
 
 class AulaSerializer(serializers.HyperlinkedModelSerializer):
@@ -18,4 +18,4 @@ class AulaSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Aula
-        fields = ["id", "horario", 'sala', 'tipo_aula', 'tema', 'descricao', 'link_documento', 'turma']
+        fields = ["id", "horario", 'sala', 'tipo_aula', 'tema', 'descricao', 'link_documento', 'is_assincrona', 'turma']

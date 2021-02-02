@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'turma.apps.TurmaConfig',
     'aula.apps.AulaConfig',
     'avaliacao.apps.AvaliacaoConfig',
+    'avatar.apps.AvatarConfig'
 ]
 
 AUTH_USER_MODEL='user.User'
