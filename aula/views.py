@@ -98,8 +98,6 @@ class AulaViewSet(viewsets.ModelViewSet):
 
             aula_tipo = unidecode.unidecode(aula.tipo_aula.lower() if aula.tipo_aula is not None else '')
 
-            print(aula.tipo_aula)
-            print(tipo)
             if aula.tipo_aula != tipo:
                 if aula.tipo_aula is not None:
                     self.TYPE_OBJ[aula_tipo].objects.get(aula=aula).delete()
@@ -112,6 +110,8 @@ class AulaViewSet(viewsets.ModelViewSet):
             aula.is_assincrona = data['is_assincrona']
             aula.descricao = data['descricao']
             aula.link_documento = data['link']
+            if aula.is_assincrona:
+                aula.end_time = dateutil.parser.parse(data['end_time'])
             aula.save()
             return Response({'status': True})
         except Exception as ex:

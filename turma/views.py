@@ -249,6 +249,12 @@ def checkTimeForOpenClass():
             else:
                 i.is_aberta_class = True
             i.save()
+
+        aulas_async: QuerySet[Aula] = querry.filter(is_assincrona=True, end_time__year=today.year,
+                                                    end_time__month=today.month,
+                                                    end_time__day=today.day)
+
+        aulas_async.update(is_aberta_avaliacao=False, is_aberta_class=False)
         print("---> Verification successful")
     except Exception as ex:
         print("---x Não foi possivel checar todas as aulas!")

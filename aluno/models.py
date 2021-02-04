@@ -7,8 +7,7 @@ from user.models import User
 
 
 class Aluno(models.Model):
-    xp = models.DecimalField(db_column='XP', max_digits=20, decimal_places=0, blank=True,
-                             null=True)  # Field name made lowercase.
+    xp = models.DecimalField(db_column='XP', max_digits=20, decimal_places=0, default=0)  # Field name made lowercase.
     curso_idcurso = models.ForeignKey(Curso, models.DO_NOTHING,
                                       db_column='Curso_idCurso')  # Field name made lowercase.
     user = models.ForeignKey(User, models.CASCADE, db_column='User_id')  # Field name made lowercase.

@@ -18,4 +18,5 @@ class AulaSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Aula
-        fields = ["id", "horario", 'sala', 'tipo_aula', 'tema', 'descricao', 'link_documento', 'is_assincrona', 'turma']
+        fields = ["id", "horario", 'sala', 'tipo_aula', 'tema', 'descricao', 'link_documento', 'is_assincrona',
+                  'end_time', 'turma']
