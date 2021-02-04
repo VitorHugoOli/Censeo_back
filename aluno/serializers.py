@@ -13,7 +13,10 @@ class AlunoSerializer(serializers.HyperlinkedModelSerializer):
     @property
     def data(self):
         ret = super().data
-        perfilPhoto = AvatarHasAluno.objects.get(aluno=self.instance).avatar.url
+        try:
+            perfilPhoto = AvatarHasAluno.objects.get(aluno=self.instance).avatar.url
+        except AvatarHasAluno.DoesNotExist:
+            perfilPhoto = None
         ret.update({"perfilPhoto": perfilPhoto})
         return ReturnDict(ret, serializer=self)
 
@@ -31,4 +34,4 @@ class TopicoSugestaoCursoSerializer(serializers.HyperlinkedModelSerializer):
 class SugestaoCursoSerializer(serializers.ModelSerializer):
     class Meta:
         model = SugestaoCurso
-        fields = ['id', 'sugestao', 'titulo', 'relevancia', 'data','topico']
+        fields = ['id', 'sugestao', 'titulo', 'relevancia', 'data', 'topico']
