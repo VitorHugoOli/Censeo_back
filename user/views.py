@@ -77,6 +77,7 @@ class LoginViewSet(viewsets.ViewSet):
         try:
             login = data['login']
             password = data['pass']
+            print(data)
 
             def generic_verify(query):
                 try:
@@ -87,12 +88,14 @@ class LoginViewSet(viewsets.ViewSet):
                             context['typeId'] = ProfessorSerializer(Professor.objects.get(user=obj)).data.get("id")
                         else:
                             context['typeId'] = AlunoSerializer(Aluno.objects.get(user=obj)).data.get("id")
-                            context['perfilPhoto'] = AlunoSerializer(Aluno.objects.get(user=obj)).data.get("perfilPhoto")
+                            context['perfilPhoto'] = AlunoSerializer(Aluno.objects.get(user=obj)).data.get(
+                                "perfilPhoto")
                         return Response({'status': True, 'user': context})
                     else:
                         return Response({'status': False, 'error': 'Senha incorreta.'})
                 except ObjectDoesNotExist as ex:
-                    return None
+                    print(ex)
+                    return generic_except(ex)
                 except Exception as ex:
                     generic_except(ex)
 
