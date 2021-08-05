@@ -21,12 +21,12 @@ class CustomUserManager(BaseUserManager):
         Creates and saves a User with the given email, date of
         birth and password.
         """
-        if not email:
-            raise ValueError('Users must have an email address')
+        if not matricula:
+            raise ValueError('Users must have an matricula')
 
         user = self.model(
             nome=nome,
-            email=self.normalize_email(email),
+            email=self.normalize_email(email) if email is not None else email,
             username=username,
             matricula=matricula,
             tipo_user=2,
@@ -59,15 +59,15 @@ class User(models.Model):
     nome = models.CharField(max_length=45, blank=True, null=True)
     username = models.CharField(unique=True, max_length=45, blank=True, null=True)
     matricula = models.CharField(unique=True, max_length=45)
-    email = models.CharField(unique=True, max_length=45)
+    email = models.CharField(unique=True, max_length=45, null=True)
     password = models.CharField(unique=True, max_length=125)
-    tipo_user = models.CharField(max_length=9, choices=TIPOUSER)
-    first_time = models.BooleanField(default=1, blank=True, null=True)
+    tipo_user = models.CharField(max_length=9, choices=TIPOUSER, default='Aluno')
+    first_time = models.BooleanField(default=1)
     is_admin = models.BooleanField(default=0)
 
     EMAIL_FIELD = 'email'
-    USERNAME_FIELD = 'username'
-    REQUIRED_FIELDS = ['nome', 'email', 'matricula']
+    USERNAME_FIELD = 'matricula'
+    REQUIRED_FIELDS = ['nome', 'email', 'username']
 
     is_active = True
 

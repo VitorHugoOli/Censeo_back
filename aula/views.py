@@ -1,5 +1,6 @@
 # Create your views here.
 import json
+import traceback
 from datetime import timedelta, datetime
 
 import dateutil.parser
@@ -154,8 +155,8 @@ def retrieve_aula_from_turma(request: Request, id: int):
             try:
                 obj = type_obj[tipo].objects.get(aula_id=i['id'])
                 i['extra'] = obj.toDict()
-            except:
-                pass
+            except Exception as ex:
+                print(ex)
     return Response({"status": True, "aulas": aulasJson})
 
 
@@ -174,18 +175,23 @@ def createAulas(dias_fixos: DiasFixos):
             for i in range(0, delta.days + 1, 1):
                 day = periodo_start + timedelta(days=i)
                 if day.weekday() == dayNumber:
-                    Aula(
+                    aula = Aula(
                         dia_horario=datetime(day.year, day.month, day.day, dias_fixos.horario.hour,
                                              dias_fixos.horario.minute),
                         is_aberta_class=0,
                         is_aberta_avaliacao=0,
+                        is_assincrona=dias_fixos.is_assincrona,
                         sala=dias_fixos.sala,
                         turma=dias_fixos.turma
-                    ).save()
+                    )
+                    if dias_fixos.is_assincrona:
+                        aula.end_time = aula.dia_horario + timedelta(days=dias_fixos.days_to_end)
+                    aula.save()
         else:
             raise Exception("Sorry, but the day passed is incorrect day: " + dias_fixos.dia.__str__())
     except Exception as ex:
-        print(ex.args)
+        traceback.print_exc()
+        print(ex)
 
 
 @api_view(['PUT'])

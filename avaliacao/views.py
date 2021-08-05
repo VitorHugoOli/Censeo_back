@@ -14,7 +14,7 @@ from Utils.Except import generic_except
 from Utils.Pontos import PONTOS_AULA
 from aluno.models import Aluno, StrikeDia
 from aula.models import Aula
-from avaliacao.models import Avaliacao, Pergunta, Resposta
+from avaliacao.models import Avaliacao, Pergunta, Resposta, Caracteristica
 from avaliacao.serializers import AvaliacaoSerializer, PerguntaSerializer, RespostaSerializer
 from avatar.models import AvatarHasAluno, Avatar
 from turma.models import AlunoHasTurma, Turma
@@ -42,7 +42,6 @@ class AvaliacaoViewSet(viewsets.ModelViewSet):
                 try:
                     aval = Avaliacao.objects.get(aula=aula, aluno=aluno)
                     resp = Resposta.objects.filter(avaliacao=aval)
-                    print(resp)
                 except Exception as ex:
                     aval = Avaliacao(
                         aula=aula,
@@ -53,17 +52,29 @@ class AvaliacaoViewSet(viewsets.ModelViewSet):
 
                 context = {'avaliacao': self.serializer_class(aval).data}
                 context['avaliacao']['tipo_aula'] = aula.tipo_aula
-                perguntas: QuerySet = Pergunta.objects.filter(tipo_aula=aula.tipo_aula)
+
+                perguntas = []
+                caracteristicas: QuerySet
+
+
+                if aula.tipo_aula == 'trabalho' or aula.tipo_aula == 'prova':
+                    caracteristicas = Caracteristica.objects.filter(id__in=[1, 5, 6, 9, 10])
+                else:
+                    caracteristicas = Caracteristica.objects.all()
+
                 if resp is not None:
-                    for i in resp:
-                        perguntas = perguntas.exclude(id=i.pergunta.id)
+                    caracteristicas = caracteristicas.exclude(id__in=resp.values_list("pergunta__caracteristica", flat=True))
+
+                for i in caracteristicas:
+                    if (aula.tipo_aula == 'trabalho' or aula.tipo_aula == 'prova') and i.id == 10:
+                        perguntas = perguntas + list(Pergunta.objects.filter(caracteristica=i).order_by("?"))[0:3]
+                    else:
+                        perguntas.append(Pergunta.objects.filter(caracteristica=i).order_by("?").first())
 
                 context['avaliacao']['perguntas'] = PerguntaSerializer(perguntas, many=True).data
 
                 for i in context['avaliacao']['perguntas']:
                     i['caracteristica'] = i['caracteristica']['qualificacao']
-
-                print(context)
 
                 return Response({'status': True, **context})
             else:

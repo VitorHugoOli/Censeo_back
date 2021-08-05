@@ -1,10 +1,14 @@
 import re
 
+from django.contrib.auth.models import AnonymousUser
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.db import IntegrityError
 # Create your views here.
 from rest_framework import viewsets
+from rest_framework.decorators import permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.request import Request
 from rest_framework.response import Response
 
 from Utils.Except import verf_user_integrityerror, generic_except
@@ -24,22 +28,24 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
-    def create(self, request, *args, **kwargs):
+    def create(self, request: Request, *args, **kwargs):
         try:
-            data = request.data
+            data: dict = request.data
 
             user = User(
-                nome=data['name'],
-                username=User.normalize_username(data['user']),
-                matricula=data['matricula'],
-                email=User.normalize_email(data['email']),
-                tipo_user=data['tipo_user'],
+                nome=data.get('name'),
+                username=User.normalize_username(data['user']) if 'user' in data else None,
+                matricula=data.get('matricula'),
+                email=User.normalize_email(data['email']) if 'email' in data else None,
+                tipo_user=data['tipo_user'] if 'tipo_user' in data else 'Aluno',
             )
             validate_password(data['pass'])
             user.set_password(data['pass'])
             user.save()
 
             context = UserSerializer(user).data
+            if 'tipo_user' not in data:
+                raise Exception('Tipo User deve ser passado')
             if data['tipo_user'] == 1:
                 prof = Professor(
                     lattes=data.get('lattes'),
@@ -60,7 +66,6 @@ class UserViewSet(viewsets.ModelViewSet):
                 aluno.save()
                 context['prof_id'] = aluno.pk
 
-            # context['token'] = Token.objects.get(user=user).key
             return Response({'status': True, 'user': context})
         except IntegrityError as ex:
             return verf_user_integrityerror(ex)
@@ -70,6 +75,47 @@ class UserViewSet(viewsets.ModelViewSet):
         except Exception as ex:
             return generic_except(ex)
 
+    def update(self, request, *args, **kwargs):
+        try:
+            data: dict = request.data
+            print(request.data)
+            id_user = kwargs['pk']
+
+            if int(id_user) != int(request.user.id):
+                raise Exception("Voce deve estar logado como esse usuário para alterá-lo")
+
+            if request.user == AnonymousUser and request.auth is not None:
+                raise Exception("Voce deve estar logado no sistema")
+
+            if 'pass' in data:
+                user = User.objects.get(id=id_user)
+                validate_password(data['pass'])
+                user.set_password(data['pass'])
+                user.save()
+            else:
+                user = User.objects.filter(id=id_user)
+                user.update(
+                    nome=data['nome'],
+                    username=User.normalize_username(data['username']) if 'username' in data else None,
+                    email=User.normalize_email(data['email']),
+                )
+                user = user[0]
+
+            if 'first_time' in data:
+                user.first_time = False
+                user.save()
+
+            context = UserSerializer(user).data
+
+        except IntegrityError as ex:
+            return verf_user_integrityerror(ex)
+        except ValidationError:
+            return Response({'status': False,
+                             'error': "Sua senha é muito simples.\nDicas: Ela tem que ter mais de 8 digitos e não pode conter só numeros"})
+        except Exception as ex:
+            return generic_except(ex)
+        return Response({'status': True, 'user': context})
+
 
 class LoginViewSet(viewsets.ViewSet):
     def create(self, request):
@@ -77,7 +123,6 @@ class LoginViewSet(viewsets.ViewSet):
         try:
             login = data['login']
             password = data['pass']
-            print(data)
 
             def generic_verify(query):
                 try:
@@ -97,7 +142,7 @@ class LoginViewSet(viewsets.ViewSet):
                     print(ex)
                     return generic_except(ex)
                 except Exception as ex:
-                    generic_except(ex)
+                    return generic_except(ex)
 
             def verify_email():
                 return generic_verify(lambda: User.objects.get(email=login))

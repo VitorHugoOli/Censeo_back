@@ -1,7 +1,8 @@
 # Create your views here.
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import dateutil.parser
+import pytz
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import QuerySet
 from pytz import timezone
@@ -18,6 +19,7 @@ from Utils.SetInterval import set_interval
 from aluno.models import Aluno
 from aluno.serializers import AlunoSerializer
 from aula.models import Aula
+from avatar.models import AvatarHasAluno, Avatar
 from curso.models import Disciplina
 from curso.serializers import DisciplinaSerializer
 from professor.models import Professor
@@ -53,6 +55,7 @@ class TurmaViewSet(viewsets.ModelViewSet):
                     print(">>> This Class Don't have schedule time yet")
                     pass
                 context["turmas"].append(jsonTurma)
+            print(context)
             return Response({"status": True, **context})
         else:
             return Response({"status": False, "message": "Hey it's a trap, you're not a professor"})
@@ -69,61 +72,121 @@ class DiasFixosViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         data: dict = request.data
         try:
-            if data.__contains__("idTurma") and data.__contains__("schedules"):
+            if "idTurma" in data and "schedules" in data:
                 turma = Turma.objects.get(id=data["idTurma"])
+                fixedDays = DiasFixos.objects.filter(turma=turma).values_list('id', flat=True)
                 scheduleReceived: list = data['schedules']
+                for i in fixedDays:
+                    is_active = False
+                    for j in scheduleReceived:
+                        if i == j['id']:
+                            is_active = True
+                    if not is_active:
+                        DiasFixos.objects.get(id=i).delete()
+
                 for i in scheduleReceived:
-                    if i.__contains__('id'):
-                        if i['id']:
-                            if i['id'] > 0:
-                                # Editando
-                                dia = DiasFixos.objects.get(id=i['id'], turma_id=turma.id)
-                                if i['horario'] is not None:
-                                    newTime = dateutil.parser.parse(i['horario'])
-                                    date1 = datetime(dia.horario.year, dia.horario.month, dia.horario.day,
-                                                     dia.horario.hour,
-                                                     dia.horario.minute)
-                                    date2 = datetime(newTime.year, newTime.month, newTime.day, newTime.hour,
-                                                     newTime.minute)
-                                    if date1 != date2 or dia.sala != i['sala']:
-                                        aulas = Aula.objects.filter(turma=turma,
+                    id = i['id']
+                    if id is None:
+                        print(i)
+                        dia = DiasFixos(
+                            turma=turma,
+                            dia=DiasFixos.NormalDayToTipoDia(i['dia']),
+                            horario=dateutil.parser.parse(i['horario']),
+                            sala=i['sala'],
+                            is_assincrona=i['is_assincrona'],
+                        )
+                        if dia.is_assincrona:
+                            dia.days_to_end = i['days_to_end']
+                        dia.save()
+                    elif id in fixedDays:
+                        dia: DiasFixos = DiasFixos.objects.get(id=id)
+                        aulas: QuerySet[Aula] = Aula.objects.filter(turma=turma,
                                                                     sala=dia.sala,
                                                                     dia_horario__hour=dia.horario.hour,
                                                                     dia_horario__minute=dia.horario.minute)
-                                        dia.horario = newTime
-                                        dia.sala = i['sala']
+                        novo_horario = dateutil.parser.parse(i['horario'])
 
-                                        for aula in aulas:
-                                            aula.dia_horario = datetime(aula.dia_horario.year, aula.dia_horario.month,
-                                                                        aula.dia_horario.day, newTime.hour,
-                                                                        newTime.minute)
-                                            aula.sala = dia.sala
-                                            aula.save()
+                        if dia.horario != novo_horario:
 
-                                        dia.save(edit=True)
-                                else:
-                                    # Deletando
-                                    dia.delete()
-                            elif i['id'] < 0:
-                                # Lixo de memoria
-                                # Esse Dia provavelmente já foi salvo no BD e está vindo alguma requisição que não foi atualizada no front
-                                pass
-                        else:
-                            # Criando
-                            dia = DiasFixos(
-                                turma=turma,
-                                dia=dayToEnum(i['dia'][0:3]),
-                                horario=dateutil.parser.parse(i['horario']),
+                            for j in aulas:
+                                replace_date = datetime(year=j.dia_horario.year, month=j.dia_horario.month,
+                                                        day=j.dia_horario.day, hour=novo_horario.hour,
+                                                        minute=novo_horario.minute)
+                                j.dia_horario = replace_date
+                                j.save()
+
+                            dia.horario = novo_horario
+
+                        if dia.is_assincrona != i['is_assincrona']:
+                            dia.is_assincrona = i['is_assincrona']
+                            aulas.update(
+                                is_assincrona=i['is_assincrona']
+                            )
+                            if i['is_assincrona'] and dia.days_to_end != i['days_to_end']:
+                                dia.days_to_end = i['days_to_end']
+                                for j in aulas:
+                                    j.end_time = j.dia_horario + timedelta(days=int(i['days_to_end']))
+
+                        if dia.sala != i['sala']:
+                            dia.sala = i['sala']
+                            aulas.update(
                                 sala=i['sala']
                             )
-                            dia.save()
-                    else:
-                        Response({"status": False, "error": "Algo está faltando"})
+                        dia.save(edit=True)
+
                 return Response({"status": True})
             else:
                 return Response({"status": False, "error": "Algo está faltando"})
         except Exception as ex:
             return generic_except(ex)
+
+
+# if i.__contains__('id'):
+#     if i['id']:
+#         if i['id'] > 0:
+#             # Editando
+#             dia = DiasFixos.objects.get(id=i['id'], turma_id=turma.id)
+#             if i['horario'] is not None:
+#                 newTime = dateutil.parser.parse(i['horario'])
+#                 date1 = datetime(dia.horario.year, dia.horario.month, dia.horario.day,
+#                                  dia.horario.hour,
+#                                  dia.horario.minute)
+#                 date2 = datetime(newTime.year, newTime.month, newTime.day, newTime.hour,
+#                                  newTime.minute)
+#                 if date1 != date2 or dia.sala != i['sala']:
+#                     aulas = Aula.objects.filter(turma=turma,
+#                                                 sala=dia.sala,
+#                                                 dia_horario__hour=dia.horario.hour,
+#                                                 dia_horario__minute=dia.horario.minute)
+#                     dia.horario = newTime
+#                     dia.sala = i['sala']
+#
+#                     for aula in aulas:
+#                         aula.dia_horario = datetime(aula.dia_horario.year, aula.dia_horario.month,
+#                                                     aula.dia_horario.day, newTime.hour,
+#                                                     newTime.minute)
+#                         aula.sala = dia.sala
+#                         aula.save()
+#
+#                     dia.save(edit=True)
+#             else:
+#                 # Deletando
+#                 dia.delete()
+#         elif i['id'] < 0:
+#             # Lixo de memoria
+#             # Esse Dia provavelmente já foi salvo no BD e está vindo alguma requisição que não foi atualizada no front
+#             pass
+#     else:
+#         # Criando
+#         dia = DiasFixos(
+#             turma=turma,
+#             dia=dayToEnum(i['dia'][0:3]),
+#             horario=dateutil.parser.parse(i['horario']),
+#             sala=i['sala']
+#         )
+#         dia.save()
+# else:
+#     Response({"status": False, "error": "Algo está faltando"})
 
 
 class TopicaTurmaViewSet(viewsets.ModelViewSet):
@@ -218,24 +281,30 @@ class SugestaoTurmaViewSet(viewsets.ModelViewSet):
 @permission_classes([IsAuthenticated])
 def pupils_list(request: Request, id: int):
     try:
-        alunos = []
-
         try:
-            alunos_turma = AlunoHasTurma.objects.filter(turma_id=id)
+            alunos_turma: QuerySet[AlunoHasTurma] = AlunoHasTurma.objects.filter(turma_id=id)
+            alunos = []
+            for i in alunos_turma:
+                aluno = Aluno.objects.get(id=i.aluno_id)
+                data = AlunoSerializer(aluno).data
+                data['xp'] = i.xp
+                avatar_aluno: AvatarHasAluno = AvatarHasAluno.objects.filter(aluno=aluno, is_active=True).first()
+                if avatar_aluno:
+                    data['perfilPhoto'] = avatar_aluno.avatar.url
+                alunos.append(data)
+
+            return Response({"status": True, "alunos": alunos})
         except ObjectDoesNotExist as ex:
             print(">>> Wasn't Possible find the Turma")
             return Response({"status": False, "message": "Não foi possivel achar a turma"})
 
-        for i in alunos_turma:
-            alunos.append(i.aluno)
-        return Response({"status": True, "alunos": AlunoSerializer(alunos, many=True).data})
+
     except Exception as ex:
         return generic_except(ex)
 
 
 def checkTimeForOpenClass():
-    print("---> Checking for open class")
-    print(datetime.now())
+    print("---> Checking for open class " + datetime.now().ctime())
     try:
         diferenca = timezone('America/Sao_Paulo')
         querry = Aula.objects.all()

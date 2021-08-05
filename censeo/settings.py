@@ -97,13 +97,16 @@ DATABASES = {
     #     'NAME': 'censeo',
     #     'OPTIONS': {'ssl': {'ca': 'rds-ca-2019-root.pem'}}
     # },
+
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'OPTIONS': {
-            'read_default_file': "/home/vitor/Documents/POC/test.cnf",
+            'read_default_file': "/home/vitor/Documents/POC/my.cnf",
         },
     }
 }
+
+DEFAULT_AUTO_FIELD='django.db.models.AutoField'
 
 REST_FRAMEWORK = {
     'DEFAULT_PARSER_CLASSES': [
@@ -161,3 +164,10 @@ django_heroku.settings(locals())
 # This remove the tag sslmode on the default database_url of heroku
 if 'sslmode' in DATABASES['default']['OPTIONS']:
     del DATABASES['default']['OPTIONS']['sslmode']
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_USE_TLS = True
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST_USER = 'vitor.h.oliveira@ufv.br'
+EMAIL_HOST_PASSWORD = 'V010799v@'
+EMAIL_PORT = 587

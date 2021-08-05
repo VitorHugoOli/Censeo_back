@@ -18,6 +18,7 @@ class AvatarHasAluno(models.Model):
     avatar = models.OneToOneField(Avatar, models.DO_NOTHING, db_column='Avatar_id',
                                   primary_key=True)  # Field name made lowercase.
     aluno = models.ForeignKey(Aluno, models.DO_NOTHING, db_column='Aluno_id')  # Field name made lowercase.
+    is_active = models.BooleanField(default=1)
 
     class Meta:
         managed = False
