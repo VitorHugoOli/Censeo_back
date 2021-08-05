@@ -14,4 +14,4 @@ class Professor(models.Model):
         unique_together = (('id', 'user'),)
 
     def __str__(self):
-        return "Professor " + self.user.nome
+        return "Professor " + self.user.nome if self.user.nome is not None else self.user.matricula

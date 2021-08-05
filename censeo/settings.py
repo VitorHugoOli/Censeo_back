@@ -14,6 +14,7 @@ import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import django_heroku
+import environ
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -51,7 +52,7 @@ INSTALLED_APPS = [
     'avatar.apps.AvatarConfig'
 ]
 
-AUTH_USER_MODEL='user.User'
+AUTH_USER_MODEL = 'user.User'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -89,21 +90,23 @@ WSGI_APPLICATION = 'censeo.wsgi.application'
 
 
 DATABASES = {
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.mysql',
-    #     'HOST': 'censeodatabase.cbq6nkppp2rn.sa-east-1.rds.amazonaws.com',
-    #     'USER': 'censeo',
-    #     'PASSWORD': '1c233n42560',
-    #     'NAME': 'censeo',
-    #     'OPTIONS': {'ssl': {'ca': 'rds-ca-2019-root.pem'}}
-    # },
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'OPTIONS': {
-            'read_default_file': "/home/vitor/Documents/POC/test.cnf",
-        },
-    }
+        'HOST': 'censeodatabase.chmamqydg3cz.sa-east-1.rds.amazonaws.com',
+        'USER': 'censeo',
+        'PASSWORD': '1c233n42560',
+        'NAME': 'censeo',
+    },
+
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.mysql',
+    #     'OPTIONS': {
+    #         'read_default_file': "./my.cnf",
+    #     },
+    # }
 }
+
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 REST_FRAMEWORK = {
     'DEFAULT_PARSER_CLASSES': [
@@ -139,6 +142,10 @@ PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
 ]
 
+# Initialise environment variables
+env = environ.Env()
+environ.Env.read_env()
+
 # Internationalization
 # https://docs.djangoproject.com/en/3.0/topics/i18n/
 
@@ -159,5 +166,18 @@ STATIC_URL = '/static/'
 django_heroku.settings(locals())
 
 # This remove the tag sslmode on the default database_url of heroku
-if 'sslmode' in DATABASES['default']['OPTIONS']:
+if 'OPTIONS' in DATABASES['default'] and 'sslmode' in DATABASES['default']['OPTIONS']:
     del DATABASES['default']['OPTIONS']['sslmode']
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_USE_TLS = True
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST_USER = env.get_value('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = env.get_value('EMAIL_PASS', default='')
+EMAIL_PORT = 587
+
+# EMAIL_HOST = 'smtp.sendgrid.net'
+# EMAIL_HOST_USER = 'apikey' # this is exactly the value 'apikey'
+# EMAIL_HOST_PASSWORD = env.get_value('EMAIL_PASS_SENDGRID',default=')
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True

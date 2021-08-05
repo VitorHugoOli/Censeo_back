@@ -4,6 +4,13 @@ from rest_framework.utils.serializer_helpers import ReturnDict
 from aluno.models import Aluno, TopicoSugestaoCurso, SugestaoCurso
 from avatar.models import AvatarHasAluno
 from user.serializers import UserSerializerWithoutToken
+from avatar.serializers import *
+
+
+class AvatarField(serializers.RelatedField):
+    def to_representation(self, value):
+        avatar = AvatarHasAluno.objects.get(aluno=self.instance, is_active=True)
+        return AvatarHasAlunoSerializer(avatar)
 
 
 class AlunoSerializer(serializers.HyperlinkedModelSerializer):

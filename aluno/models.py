@@ -13,22 +13,12 @@ class Aluno(models.Model):
     user = models.ForeignKey(User, models.CASCADE, db_column='User_id')  # Field name made lowercase.
 
     def __str__(self):
-        return self.user.nome + " " + self.user.matricula + " Aluno"
+        return (self.user.nome or "") + " " + self.user.matricula + " Aluno"
 
     class Meta:
         managed = False
         db_table = 'Aluno'
         unique_together = (('id', 'user'),)
-
-
-class Elo(models.Model):
-    tipo = models.CharField(db_column='Tipo', max_length=7, blank=True, null=True)  # Field name made lowercase.
-    aluno = models.ForeignKey(Aluno, models.CASCADE, db_column='Aluno_id')  # Field name made lowercase.
-
-    class Meta:
-        managed = False
-        db_table = 'Elo'
-        unique_together = (('id', 'aluno'),)
 
 
 class TopicoSugestaoCurso(models.Model):
@@ -49,7 +39,7 @@ class SugestaoCurso(models.Model):
     relevancia = models.CharField(max_length=15, blank=True, null=True, choices=tipo_relevancia)
     data = models.DateTimeField()
     topico = models.ForeignKey(TopicoSugestaoCurso, models.CASCADE,
-                                              db_column='Topico_Sugestao_Curso_id')  # Field name made lowercase.
+                               db_column='Topico_Sugestao_Curso_id')  # Field name made lowercase.
     curso = models.ForeignKey(Curso, models.CASCADE,
                               db_column='Topico_Sugestao_Curso_Curso_id')  # Field name made lowercase.
     aluno = models.ForeignKey(Aluno, models.CASCADE, db_column='Aluno_id')  # Field name made lowercase.

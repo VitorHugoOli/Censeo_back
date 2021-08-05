@@ -28,12 +28,11 @@ sensitive_post_parameters_m = method_decorator(sensitive_post_parameters())
 from user.models import User
 
 
-#
 # class UserModelAdmin(admin.ModelAdmin):
 #     model = User
 #     # change_password_form = User
 
-class UserMOdelAdmin(admin.ModelAdmin):
+class UserModelAdmin(admin.ModelAdmin):
     add_form_template = 'admin/auth/user/add_form.html'
     change_user_password_template = None
     fieldsets = (
@@ -47,13 +46,13 @@ class UserMOdelAdmin(admin.ModelAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('username', 'password1', 'password2'),
+            'fields': ('matricula', 'password1', 'password2'),
         }),
     )
     form = UserChangeForm
     add_form = UserCreationForm
     change_password_form = AdminPasswordChangeForm
-    list_display = ('username', 'email', 'is_admin','first_time')
+    list_display = ('matricula', 'nome', 'is_admin', 'first_time')
     search_fields = ('username', 'email')
     ordering = ('username',)
 
@@ -198,4 +197,4 @@ class UserMOdelAdmin(admin.ModelAdmin):
         return super().response_add(request, obj, post_url_continue)
 
 
-admin.site.register(User, UserMOdelAdmin)
+admin.site.register(User, UserModelAdmin)

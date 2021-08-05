@@ -27,24 +27,24 @@ Use the package manager [pip](https://pip.pypa.io/en/stable/) to install the pac
 ./install.sh
 ```
 ## Fluxo inicial de criação
+- Cria Bd através do script sql na pasta root
 - Realizar as migrações no BD
 ```bash
-python manage.py makemigrations
 python manage.py migrate
 ```
-- Create superuser
+- Create superuser(Matricula e senha)
 ```bash
 python manage.py createsupeeuser
 ```
 No painel administrativos ou pelas rotas criadas no postman
-- Create Professor
-- Create Aluno
 - Create Faculdade
-- Create Curso
-- Create Disciplina
+- Create User Prof(Matricula, Senha; O restante será preenchido no primeiro login)
+- Create Cursos
+- Create Disciplinas
 - Create Turma
-- Create Dias Fixos
 - Create Prof Has Turma
+- Create Dias Fixos
+- Create User Aluno(Matricula, Senha; O restante será preenchido no primeiro login)
 - Create Aluno Has Turma 
 
 ## Configurations

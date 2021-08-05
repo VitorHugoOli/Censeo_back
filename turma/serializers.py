@@ -21,7 +21,7 @@ class TurmaDisciplinaSerializer(serializers.ModelSerializer):
 class DiasFixosSerializer(serializers.ModelSerializer):
     class Meta:
         model = DiasFixos
-        fields = ['id', 'dia', 'horario', 'sala']
+        fields = ['id', 'dia', 'horario', 'sala', 'is_assincrona', 'days_to_end']
 
 
 class SugestaoTurmaSerializer(serializers.ModelSerializer):

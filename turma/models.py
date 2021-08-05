@@ -32,6 +32,8 @@ class DiasFixos(models.Model):
     dia = models.CharField(max_length=3, blank=True, null=True, choices=TIPO_DIA)
     horario = models.DateTimeField(blank=True, null=True)
     sala = models.CharField(max_length=45, blank=True, null=True)
+    days_to_end = models.IntegerField(blank=True, null=True)
+    is_assincrona = models.BooleanField(default=0)
     turma = models.ForeignKey(Turma, models.CASCADE, db_column='Turma_id')  # Field name made lowercase.
 
     class Meta:
@@ -41,6 +43,20 @@ class DiasFixos(models.Model):
 
     def __str__(self):
         return self.turma.codigo + " " + self.dia + " " + self.horario.__str__()
+
+    def NormalDayToTipoDia(dia):
+        if dia == "Segunda":
+            return "SEG"
+        if dia == "Terca":
+            return "TER"
+        if dia == "Quarta":
+            return "QUA"
+        if dia == "Quinta":
+            return "QUI"
+        if dia == "Sexta":
+            return "SEX"
+        if dia == "Sabado":
+            return "SAB"
 
     def save(self, edit=False, *args, **kwargs):
         super().save(*args, **kwargs)
@@ -71,9 +87,9 @@ class SugestaoTurma(models.Model):
     data = models.DateTimeField()
     aluno = models.ForeignKey(Aluno, models.CASCADE, db_column='Aluno_id')  # Field name made lowercase.
     topico = models.ForeignKey(TopicaTurma, models.CASCADE,
-                                     db_column='Topica_Turma_id')  # Field name made lowercase.
+                               db_column='Topica_Turma_id')  # Field name made lowercase.
     turma = models.ForeignKey(Turma, models.CASCADE,
-                                           db_column='Topica_Turma_Turma_id')  # Field name made lowercase.
+                              db_column='Topica_Turma_Turma_id')  # Field name made lowercase.
 
     class Meta:
         managed = False

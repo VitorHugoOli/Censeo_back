@@ -10,7 +10,8 @@ def aula(obj):
 
 class aulaAdmin(admin.ModelAdmin):
     model = Aula
-    list_display = (aula, 'is_aberta_avaliacao', 'is_aberta_class')
+    filter = ('dia_horario')
+    list_display = (aula, 'dia_horario', 'is_aberta_avaliacao', 'is_aberta_class')
 
 
 admin.site.register(Aula, aulaAdmin)
