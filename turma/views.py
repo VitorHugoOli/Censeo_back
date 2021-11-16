@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import dateutil.parser
 import pytz
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Avg
 from pytz import timezone
 from rest_framework import viewsets, permissions
 from rest_framework.authtoken.models import Token
@@ -13,12 +13,14 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from Utils.Enums import tipo_qualificativo
 from Utils.Except import generic_except
 from Utils.Parsers import dayToEnum
 from Utils.SetInterval import set_interval
 from aluno.models import Aluno
 from aluno.serializers import AlunoSerializer
 from aula.models import Aula
+from avaliacao.models import Avaliacao, Caracteristica, Resposta
 from avatar.models import AvatarHasAluno, Avatar
 from curso.models import Disciplina
 from curso.serializers import DisciplinaSerializer
@@ -55,10 +57,38 @@ class TurmaViewSet(viewsets.ModelViewSet):
                     print(">>> This Class Don't have schedule time yet")
                     pass
                 context["turmas"].append(jsonTurma)
-            print(context)
             return Response({"status": True, **context})
         else:
             return Response({"status": False, "message": "Hey it's a trap, you're not a professor"})
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def list_turma_stats(request: Request, *args, **kwargs):
+    tipo_resps = [None or '', 'pessima', 'ruim', 'regular', 'boa', 'perfeita']
+    characteristics = Caracteristica.objects.filter()
+
+    token = Token.objects.get(key=request.auth)
+    user = User.objects.get(pk=token.user.pk)
+
+    if "Professor" != user.tipo_user:
+        return Response({"status": False, "message": "Hey it's a trap, you're not a professor"})
+
+    turmas_prof = Turma.objects.filter(professorhasturma__professor__user=user)
+    context = TurmaSerializer(turmas_prof, many=True).data
+
+    for index, turma in enumerate(turmas_prof):
+        disciplina = DisciplinaSerializer(turma.disciplina).data
+        del disciplina['id']
+        context[index] = {**context[index], **disciplina}
+        context[index]['stats'] = {}
+        for i in characteristics:
+            respostas = Resposta.objects.filter(avaliacao__aula__turma=turma, pergunta__caracteristica=i, tipo_resposta='qualificativa').values_list(
+                'resposta_qualificativa', flat=True)
+            if len(respostas) > 0:
+                context[index]['stats'][i.qualificacao] = sum([tipo_resps.index(i) for i in respostas]) / len(respostas)
+        context[index]['avals_count'] = Avaliacao.objects.filter(aula__turma=turma).count()
+    return Response({"status": True, "turmas": context})
 
 
 class DiasFixosViewSet(viewsets.ModelViewSet):

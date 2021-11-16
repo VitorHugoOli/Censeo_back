@@ -223,7 +223,7 @@ def get_professor_class_open(request):
         'request': request,
     }
 
-    aulas = Aula.objects.filter(turma__in=turmas, is_aberta_class=True, is_assincrona=False)
+    aulas = Aula.objects.filter(turma__in=turmas, is_aberta_class=True, is_assincrona=False).order_by('dia_horario')
     context['aulas'] = AulaSerializer(aulas, many=True, context=serializer_context).data
     return Response({'status': True, **context})
 

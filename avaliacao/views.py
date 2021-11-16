@@ -2,12 +2,14 @@
 import decimal
 import math
 from datetime import datetime, timedelta
-from decimal import Decimal
 
-from django.db.models import QuerySet, Sum, Avg, Count, F
+from django.db.models import QuerySet, Sum, Count, F
 from django.utils import timezone
 from rest_framework import viewsets, permissions
 from rest_framework.authtoken.models import Token
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.request import Request
 from rest_framework.response import Response
 
 from Utils.Except import generic_except
@@ -128,7 +130,7 @@ class RespostaViewSet(viewsets.ModelViewSet):
                     aval.completa = True
 
                     if aval.aula.is_assincrona is False:
-                        aval.pontos = decimal.Decimal(CalcAvalPontuacao(aval.aula.end_time, aval.end_time))
+                        aval.pontos = decimal.Decimal(calcAvalPontuacao(aval.aula.end_time, aval.end_time))
                     else:
                         aval.pontos = 25
                     aval.save()
@@ -149,7 +151,19 @@ class RespostaViewSet(viewsets.ModelViewSet):
             return generic_except(ex)
 
 
-def CalcAvalPontuacao(end_aula: datetime, end_aval: datetime):
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def summaryCharacteristicsByClass(request: Request):
+    token = Token.objects.get(key=request.auth)
+    user = User.objects.get(pk=token.user.pk)
+
+    turmas = Turma.objects.filter(professorhasturma__professor__user=user)
+
+    avals = Avaliacao.objects.filter(aula__turma__in=turmas)
+    # todo: terminate
+
+
+def calcAvalPontuacao(end_aula: datetime, end_aval: datetime):
     difference = end_aval - end_aula
     minutes = difference.total_seconds() / 60
     if minutes < 20:
@@ -161,22 +175,23 @@ def CalcAvalPontuacao(end_aula: datetime, end_aval: datetime):
         return (PONTOS_AULA * 0.60) * pow(0.90, hours)
 
 
-def CalcPontuacaoDia(aluno):
+def calcPontuacaoDia(aluno):
     today = datetime.today()
     turmas = AlunoHasTurma.objects.filter(aluno=aluno).values('turma')
     aulas = Aula.objects.filter(end_time__date=today, turma__in=turmas, is_assincrona=False, is_aberta_avaliacao=True)
     avals: QuerySet[Avaliacao] = Avaliacao.objects.filter(aluno=aluno,
                                                           aula__in=aulas,
                                                           completa=True)
+
     if len(aulas) != 0:
-        avg: decimal.Decimal = avals.aggregate(Sum("pontos"))['pontos__sum'] / len(aulas)
+        avg: decimal.Decimal = (avals.aggregate(Sum("pontos"))['pontos__sum'] or 0) / len(aulas)
     else:
         return -1  # Não houve aulas
 
     return avg
 
 
-def CalcWonWeekRewards(aluno):
+def calcWonWeekRewards(aluno):
     today = datetime.today()
     startWeek = today - timedelta(7)
 
@@ -221,22 +236,27 @@ def CalcRankTurma(turma: Turma):
 
 
 def weekRoutine():
+    # TODO: Entender error na rotina de weekRoutine
+    #  TODO: Entender melhor funcionamento dos strikes em relaçao as auals assincronas e sincronas
     alunos = Aluno.objects.all()
     for i in alunos:
-        pontos = CalcPontuacaoDia(i)
+        pontos = calcPontuacaoDia(i)
         if pontos == -1:
             StrikeDia(
                 date=datetime.today(),
+                strike='',
                 aluno=i
             ).save()
-            return
-        strike = ''
-        if pontos > 20:
+            continue
+        if pontos > 18:
             strike = 'fire'
         elif pontos > 10:
             strike = 'cold_fire'
-        else:
+        elif pontos > 0:
             strike = 'snow'
+        else:
+            strike = 'cactus'
+
         StrikeDia.objects.create(
             strike=strike,
             date=datetime.today(),
@@ -261,7 +281,7 @@ def rewardsRoutine():
     if avatar is not None or avatar_shiny is not None:
         alunos = Aluno.objects.all()
         for i in alunos:
-            pontos = CalcWonWeekRewards(i)
+            pontos = calcWonWeekRewards(i)
             print(f"pontos-> {pontos}")
             if pontos == 25.0 and avatar_shiny is not None:
                 AvatarHasAluno(

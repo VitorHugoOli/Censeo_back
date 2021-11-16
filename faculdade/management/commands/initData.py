@@ -110,7 +110,8 @@ def init_fixed_days():
             for dia, horario, sala, to_end, is_async in days:
                 dias = DiasFixos.objects.get_or_create(dia=dia, horario=datetime.strptime(horario, "%Y-%m-%d %H:%M:%S"), sala=sala, days_to_end=to_end, is_assincrona=is_async,
                                                        turma=turma)[0]
-                dias.save()
+                # Todo: Precisa do save ?
+                # dias.save()
         print("Dias_fixos criado com sucesso \\o/")
     except Exception as ex:
         raise Exception("xHouve algum erro ao criar os horarios fixos das turmas!\n" + repr(ex))

@@ -1,5 +1,5 @@
 # Create your views here.
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import QuerySet
@@ -10,10 +10,9 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from Utils.Except import generic_except
-from aluno.models import Aluno, TopicoSugestaoCurso, SugestaoCurso
+from aluno.models import Aluno, TopicoSugestaoCurso, SugestaoCurso, StrikeDia
 from aluno.serializers import AlunoSerializer, TopicoSugestaoCursoSerializer, SugestaoCursoSerializer
 from curso.models import Curso, Disciplina
-from faculdade.models import Faculdade
 from turma.models import AlunoHasTurma
 
 
@@ -137,5 +136,22 @@ def get_suggestions_categories(request):
         context['categorias']['Disciplinas'].append(
             {'id': turma.id, 'sigla': disp.sigla, 'nome': disp.nome, 'codigo': turma.codigo, 'tipo': 'materia'})
 
-    print(context)
+    return Response({'status': True, **context})
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def getStrikes(request):
+    aluno = Aluno.objects.get(user=request.user)
+    context: dict = {"strikes": []}
+    today = datetime.today()
+    date = today - timedelta(days=today.weekday())
+    for i in range(7):
+        try:
+            strike = StrikeDia.objects.get(aluno=aluno, date=date)
+            context['strikes'].append(strike.strike)
+        except ObjectDoesNotExist as ex:
+            context['strikes'].append('')
+        date += timedelta(days=1)
+
     return Response({'status': True, **context})
