@@ -58,7 +58,6 @@ class AvaliacaoViewSet(viewsets.ModelViewSet):
                 perguntas = []
                 caracteristicas: QuerySet
 
-
                 if aula.tipo_aula == 'trabalho' or aula.tipo_aula == 'prova':
                     caracteristicas = Caracteristica.objects.filter(id__in=[1, 5, 6, 9, 10])
                 else:
@@ -224,7 +223,6 @@ def CalcGeneralRankByQuantSubj(aluno):
     alunos = AlunoHasTurma.objects.values_list("aluno", flat=True).annotate(num_turmas=Count("id")).filter(
         num_turmas=countTurmas)
     rank = Aluno.objects.filter(id__in=list(alunos)).annotate(nome=F('user__nome')).values('id', 'nome', 'xp')
-    print(rank)
     return rank
 
 
@@ -282,7 +280,6 @@ def rewardsRoutine():
         alunos = Aluno.objects.all()
         for i in alunos:
             pontos = calcWonWeekRewards(i)
-            print(f"pontos-> {pontos}")
             if pontos == 25.0 and avatar_shiny is not None:
                 AvatarHasAluno(
                     avatar=avatar_shiny,

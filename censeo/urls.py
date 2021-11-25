@@ -48,7 +48,7 @@ router.register(r'resposta', views_aval.RespostaViewSet)
 urlpatterns = [
     path('', include(router.urls)),
     path('aluno/suggestionCategories', views_aluno.get_suggestions_categories),
-    path('aluno/getStrikes', views_aluno.getStrikes),
+    path('aluno/getStrikes', views_aluno.get_strikes),
     path('prof/suggestionCategories', views_prof.get_suggestions_categories),
     path('aulas_abertas/', views_aulas.get_professor_class_open),
     path('endClass/', views_aulas.put_class_end),
@@ -56,6 +56,7 @@ urlpatterns = [
     path('aulasTurma/<int:id>', views_aulas.retrieve_aula_from_turma),
     path('turmas/<int:id>/alunos', views_turma.pupils_list),
     path('turmasStats/', views_turma.list_turma_stats),
+    path('turmasStats/<int:id>', views_turma.turma_stats),
     path('admin/', admin.site.urls),
     url(r'^api-auth/', include('rest_framework.urls'))
 ]

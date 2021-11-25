@@ -1,4 +1,5 @@
 # Create your views here.
+import random
 from datetime import datetime, timedelta
 
 import dateutil.parser
@@ -28,6 +29,7 @@ from professor.models import Professor
 from turma.models import Turma, DiasFixos, ProfessorHasTurma, AlunoHasTurma, SugestaoTurma, TopicaTurma
 from turma.serializers import TurmaSerializer, DiasFixosSerializer, SugestaoTurmaSerializer, TopicaTurmaSerializer
 from user.models import User
+import statistics
 
 
 class TurmaViewSet(viewsets.ModelViewSet):
@@ -68,15 +70,20 @@ def list_turma_stats(request: Request, *args, **kwargs):
     tipo_resps = [None or '', 'pessima', 'ruim', 'regular', 'boa', 'perfeita']
     characteristics = Caracteristica.objects.filter()
 
-    token = Token.objects.get(key=request.auth)
-    user = User.objects.get(pk=token.user.pk)
+    user = request.user
 
-    if "Professor" != user.tipo_user:
-        return Response({"status": False, "message": "Hey it's a trap, you're not a professor"})
+    if "Professor" == user.tipo_user:
+        context = prof_turmas_stats(characteristics, tipo_resps, user)
+    else:
+        context = aluno_turmas_stats(characteristics, tipo_resps, user)
 
+    return Response({"status": True, "turmas": context})
+
+
+def prof_turmas_stats(characteristics, tipo_resps, user):
     turmas_prof = Turma.objects.filter(professorhasturma__professor__user=user)
-    context = TurmaSerializer(turmas_prof, many=True).data
 
+    context = TurmaSerializer(turmas_prof, many=True).data
     for index, turma in enumerate(turmas_prof):
         disciplina = DisciplinaSerializer(turma.disciplina).data
         del disciplina['id']
@@ -86,9 +93,102 @@ def list_turma_stats(request: Request, *args, **kwargs):
             respostas = Resposta.objects.filter(avaliacao__aula__turma=turma, pergunta__caracteristica=i, tipo_resposta='qualificativa').values_list(
                 'resposta_qualificativa', flat=True)
             if len(respostas) > 0:
+                context[index]['stats'][i.qualificacao] = statistics.mean([tipo_resps.index(i) for i in respostas])
+        context[index]['avals_count'] = Avaliacao.objects.filter(aula__turma=turma).count()
+    return context
+
+
+def aluno_turmas_stats(characteristics, tipo_resps, user):
+    turmas_aluno = Turma.objects.filter(alunohasturma__aluno__user=user)
+
+    context = TurmaSerializer(turmas_aluno, many=True).data
+
+    for index, turma in enumerate(turmas_aluno):
+
+        disciplina = DisciplinaSerializer(turma.disciplina).data
+
+        del disciplina['id']
+
+        context[index] = {**context[index], **disciplina}
+        context[index]['stats'] = {}
+
+        for i in characteristics:
+            respostas = Resposta.objects.filter(avaliacao__aula__turma=turma, pergunta__caracteristica=i, tipo_resposta='qualificativa', avaliacao_aluno__user=user).values_list(
+                'resposta_qualificativa', flat=True)
+            if len(respostas) > 0:
                 context[index]['stats'][i.qualificacao] = sum([tipo_resps.index(i) for i in respostas]) / len(respostas)
         context[index]['avals_count'] = Avaliacao.objects.filter(aula__turma=turma).count()
-    return Response({"status": True, "turmas": context})
+
+    return context
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def turma_stats(request: Request, *args, **kwargs):
+    user = request.user
+    id = kwargs['id']
+    context = {'aulas': {}}
+
+    if "Professor" == user.tipo_user:
+        _turma_stats(context, id, None)
+    else:
+        _turma_stats(context, id, user.id)
+
+    return Response(context, status=200)
+
+
+def _turma_stats(context, id, aluno_id):
+    aulas: QuerySet[Aula] = Aula.objects.filter(turma_id=id).order_by('-end_time')
+    aula_context = context['aulas']
+    aula_context['total'] = len(aulas)
+    aula_context['done'] = len(aulas.filter(end_time__isnull=False))
+    aula_context['teorica'] = len(aulas.filter(tipo_aula='teorica'))
+    aula_context['prova'] = len(aulas.filter(tipo_aula='prova'))
+    aula_context['trabalho'] = len(aulas.filter(tipo_aula='trabalho'))
+    aula_context['excursao'] = len(aulas.filter(tipo_aula='excursao'))
+    tipo_resps = [None or '', 'pessima', 'ruim', 'regular', 'boa', 'perfeita']
+
+    alunos = AlunoHasTurma.objects.filter(turma_id=id).order_by('-xp')
+    context['rank'] = []
+    for i in alunos:
+        aluno_serialize = AlunoSerializer(i.aluno).data
+        aluno_serialize['turma_xp'] = i.xp
+        context['rank'].append(aluno_serialize)
+
+    characteristics = Caracteristica.objects.filter()
+
+    for j in characteristics:
+        label = j.qualificacao.split(' ')[0].split('/')[0]
+        context[label] = {}
+
+        if aluno_id is not None:
+            print("Bingo")
+            respostas = Resposta.objects.filter(avaliacao__aula__turma__id=id, pergunta__caracteristica=j, tipo_resposta='qualificativa', avaliacao__aluno__id=aluno_id)
+        else:
+            respostas = Resposta.objects.filter(avaliacao__aula__turma__id=id, pergunta__caracteristica=j, tipo_resposta='qualificativa')
+
+        respostas = respostas.values_list('resposta_qualificativa', flat=True)
+        respostas = [tipo_resps.index(i) for i in respostas]
+        context[label]['len'] = len(respostas)
+
+        if len(respostas) > 0:
+            context[label]['media'] = statistics.mean(respostas)
+            context[label]['desvio'] = statistics.pstdev(respostas)
+            context[label]['variancia'] = statistics.pvariance(respostas)
+        else:
+            context[label]['media'] = 0
+            context[label]['desvio'] = 0
+            context[label]['variancia'] = 0
+
+        context[label]['ultimas_dez_medias'] = {}
+
+    for i in aulas.filter(end_time__isnull=False)[0:10]:
+        respostas = Resposta.objects.filter(avaliacao__aula__turma__id=id, tipo_resposta='qualificativa', avaliacao_aula=i)
+        if len(respostas) > 0:
+            for j in characteristics:
+                label = j.qualificacao.split(' ')[0].split('/')[0]
+                respostas_charact = respostas.filter(pergunta__caracteristica=j).values_list('resposta_qualificativa', flat=True)
+                context[label]['ultimas_dez_medias'][i.end_time.strftime("%d/%m")] = statistics.mean([tipo_resps.index(i) for i in respostas_charact])
 
 
 class DiasFixosViewSet(viewsets.ModelViewSet):
@@ -117,7 +217,6 @@ class DiasFixosViewSet(viewsets.ModelViewSet):
                 for i in scheduleReceived:
                     id = i['id']
                     if id is None:
-                        print(i)
                         dia = DiasFixos(
                             turma=turma,
                             dia=DiasFixos.NormalDayToTipoDia(i['dia']),

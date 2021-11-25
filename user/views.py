@@ -78,7 +78,6 @@ class UserViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         try:
             data: dict = request.data
-            print(request.data)
             id_user = kwargs['pk']
 
             if int(id_user) != int(request.user.id):

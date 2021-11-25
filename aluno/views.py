@@ -44,7 +44,6 @@ class TopicoSugestaoCursoViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         try:
             id = kwargs['pk']
-            print(id)
             data = request.data
             curso = Curso.objects.get(id=id)
             for i in data:
@@ -141,14 +140,13 @@ def get_suggestions_categories(request):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def getStrikes(request):
-    aluno = Aluno.objects.get(user=request.user)
+def get_strikes(request):
     context: dict = {"strikes": []}
     today = datetime.today()
     date = today - timedelta(days=today.weekday())
     for i in range(7):
         try:
-            strike = StrikeDia.objects.get(aluno=aluno, date=date)
+            strike = StrikeDia.objects.get(aluno__user=request.user, date=date)
             context['strikes'].append(strike.strike)
         except ObjectDoesNotExist as ex:
             context['strikes'].append('')

@@ -61,8 +61,8 @@ class DiasFixos(models.Model):
     def save(self, edit=False, *args, **kwargs):
         super().save(*args, **kwargs)
         if not edit:
-            from aula.views import createAulas
-            createAulas(self)
+            from aula.views import create_aulas
+            create_aulas(self)
 
 
 class TopicaTurma(models.Model):

@@ -51,7 +51,6 @@ class AulaViewSet(viewsets.ModelViewSet):
 
     @staticmethod
     def checkExtra(aula, extra, tipo):
-        print(extra)
         if tipo == 'prova':
             prv = Prova.objects.get(aula=aula)
             if prv.quant_questao != extra:
@@ -145,11 +144,10 @@ def retrieve_aula_from_turma(request: Request, id: int):
         'trabalho': TrabalhoPratico,
         'excursao': Excursao
     }
-    turma = Turma.objects.get(id=id)
-    aulas = Aula.objects.filter(turma=turma)
-    dictAulas = AulaSerializer(aulas, many=True).data
-    aulasJson = json.loads(json.dumps(dictAulas))
-    for i in aulasJson:
+    aulas = Aula.objects.filter(turma__aula__id=id,end_time__isnull=not request.query_params.__contains__('is_end')).order_by('-end_time')
+    dict_aulas = AulaSerializer(aulas, many=True).data
+    aulas_json = json.loads(json.dumps(dict_aulas))
+    for i in aulas_json:
         tipo = i['tipo_aula']
         if (tipo is not None or tipo != 'teorica') and (type_obj.__contains__(tipo)):
             try:
@@ -157,10 +155,10 @@ def retrieve_aula_from_turma(request: Request, id: int):
                 i['extra'] = obj.toDict()
             except Exception as ex:
                 print(ex)
-    return Response({"status": True, "aulas": aulasJson})
+    return Response({"status": True, "aulas": aulas_json})
 
 
-def createAulas(dias_fixos: DiasFixos):
+def create_aulas(dias_fixos: DiasFixos):
     '''
     this function creates all the class of an specify diaFixo model
     :param dias_fixos:
