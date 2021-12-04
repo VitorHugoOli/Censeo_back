@@ -33,8 +33,8 @@ class Command(BaseCommand):
 
 def initFacu():
     try:
-        facu = Faculdade.objects.get_or_create(nome="Universidade Federal de Viçosa -  Florestal", sigla="UFV", periodo_start="2021-07-18 15:33:44",
-                                               periodo_end="2021-10-29 15:34:17")
+        facu = Faculdade.objects.get_or_create(nome="Universidade Federal de Viçosa -  Florestal", sigla="UFV", periodo_start="2021-12-06 03:33:44",
+                                               periodo_end="2021-12-22 23:34:17")
         print("Faculdade criada com sucesso \\o/")
         return facu[0]
     except Exception as ex:
@@ -43,9 +43,9 @@ def initFacu():
 
 def initProfs():
     try:
-        profs = [["daniel", "0001"], ["glaucia", "0002"], ["thais", "0003"]]
-        for nome, matricula in profs:
-            user = User.objects.get_or_create(nome=nome, matricula=matricula)[0]
+        profs = [["daniel", "0001", "danielmendes@ufv.br"], ["glaucia", "0002", "glaucia@ufv.br"], ["thais", "0003", "thais.braga@ufv.br"]]
+        for nome, matricula, email in profs:
+            user = User.objects.get_or_create(nome=nome, matricula=matricula, email=email)[0]
             user.tipo_user = 1
             user.set_password("abc45678")
             user.save()
@@ -66,9 +66,9 @@ def initCursos(facu):
 
 def initDisciplina(curso):
     try:
-        disciplinas = [["FUNDAMENTOS DA TEORIA DA COMPUTAÇÃO", "CCF131", "FTC"],
-                       ["ALGORITMOS E ESTRUTURAS DE DADOS II", "CCF212", "AEDS II"],
-                       ["SISTEMAS DISTRIBUÍDOS E PARALELOS", "CCF355", "SDP"], ]
+        disciplinas = [["Banco de Dados".upper(), "CCF221", "BD"],
+                       ["Engenharia de Software II".upper(), "CCF322", "ESOF II"],
+                       ["Algoritmos e Estrutura de Dados I".upper(), "CCF211", "AEDS I"], ]
         for nome, codigo, sigla in disciplinas:
             Disciplina.objects.get_or_create(nome=nome, codigo=codigo, sigla=sigla, curso=curso)
         print("Disciplinas criadas com sucesso \\o/")
@@ -78,10 +78,10 @@ def initDisciplina(curso):
 
 def init_turmas():
     try:
-        turmas = ["CCF131", "CCF212", "CCF355"]
+        turmas = ["CCF221", "CCF322", "CCF211"]
         for i in turmas:
             disc = Disciplina.objects.get(codigo=i)
-            Turma.objects.get_or_create(codigo=i, ano=2021, semestre=1, disciplina=disc)
+            Turma.objects.get_or_create(codigo=i, ano=2021, semestre=3, disciplina=disc)
         print("Turmas criadas com sucesso \\o/")
     except Exception as ex:
         raise Exception("xHouve algum erro ao inicializar as turmas!\n" + repr(ex))
@@ -89,7 +89,7 @@ def init_turmas():
 
 def init_prof_has_turma():
     try:
-        prof_turmas = [["0001", "CCF131"], ["0002", "CCF212"], ["0003", "CCF355"]]
+        prof_turmas = [["0001", "CCF221"], ["0002", "CCF322"], ["0003", "CCF211"]]
         for m, c in prof_turmas:
             prof = Professor.objects.get(user__matricula=m)
             turma = Turma.objects.get(codigo=c)

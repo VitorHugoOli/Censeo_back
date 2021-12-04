@@ -6,5 +6,5 @@ class AvaliacaoConfig(AppConfig):
 
     def ready(self):
         from avaliacao import updater
-        updater.start_week()
+        updater.start_strike()
         updater.start_rewards()

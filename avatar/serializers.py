@@ -9,12 +9,12 @@ from user.serializers import UserSerializerWithoutToken
 class AvatarSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Avatar
-        fields = ['url']
+        fields = ['id', 'url']
 
 
 class AvatarHasAlunoSerializer(serializers.ModelSerializer):
-    url = AvatarSerializer(source='avatar')
+    avatar_u = AvatarSerializer(source='avatar')
 
     class Meta:
         model = AvatarHasAluno
-        fields = ['url']
+        fields = ['avatar_u', 'is_active']

@@ -111,6 +111,17 @@ class SugestaoCursoViewSet(viewsets.ModelViewSet):
         except Exception as ex:
             return generic_except(ex)
 
+    def update(self, request, *args, **kwargs):
+        try:
+            id = kwargs['pk']
+            relevance = request.data['relevance']
+            sug = SugestaoCurso.objects.get(id=id)
+            sug.relevancia = relevance
+            sug.save()
+            return Response({"status": True})
+        except Exception as ex:
+            return generic_except(ex)
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])

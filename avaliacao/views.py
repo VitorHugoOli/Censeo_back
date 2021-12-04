@@ -131,7 +131,8 @@ class RespostaViewSet(viewsets.ModelViewSet):
                     if aval.aula.is_assincrona is False:
                         aval.pontos = decimal.Decimal(calcAvalPontuacao(aval.aula.end_time, aval.end_time))
                     else:
-                        aval.pontos = 25
+                        # Avaliação assincrona e setada com PONTOS_AULA para o aluno ainda ganhar o strike
+                        aval.pontos = PONTOS_AULA
                     aval.save()
 
                     aluno_turma = AlunoHasTurma.objects.get(aluno=aval.aluno, turma=aval.aula.turma)
@@ -152,7 +153,7 @@ class RespostaViewSet(viewsets.ModelViewSet):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def summaryCharacteristicsByClass(request: Request):
+def summary_characteristics_by_class(request: Request):
     token = Token.objects.get(key=request.auth)
     user = User.objects.get(pk=token.user.pk)
 
@@ -233,12 +234,17 @@ def CalcRankTurma(turma: Turma):
     return rank
 
 
-def weekRoutine():
-    # TODO: Entender error na rotina de weekRoutine
-    #  TODO: Entender melhor funcionamento dos strikes em relaçao as auals assincronas e sincronas
+def strike_routine():
+    # TODO: Entender error na rotina de strike_routine
+    # TODO: Entender melhor funcionamento dos strikes em relaçao as auals assincronas e sincronas
     alunos = Aluno.objects.all()
     for i in alunos:
         pontos = calcPontuacaoDia(i)
+
+        # Verificação de seguranca para não adicionar mais de um strike com a mesma data para o mesmo aluno
+        if len(StrikeDia.objects.filter(aluno=i, date=datetime.today())) > 0:
+            continue
+
         if pontos == -1:
             StrikeDia(
                 date=datetime.today(),
@@ -246,6 +252,7 @@ def weekRoutine():
                 aluno=i
             ).save()
             continue
+
         if pontos > 18:
             strike = 'fire'
         elif pontos > 10:
@@ -262,15 +269,31 @@ def weekRoutine():
         )
 
 
-def rewardsRoutine():
+def delete_repeat_strike():
+    # Fazer dump do banco antes de realizar
+    alunos = Aluno.objects.all()
+    strikes = StrikeDia.objects.all().order_by('date')
+    first_date = strikes.first().date
+    last_date = strikes.last().date
+    days = last_date - first_date
+    for i in alunos:
+        for j in range(1, days.days + 1):
+            strikes_a: QuerySet[StrikeDia] = strikes.filter(aluno=i, date=first_date.__add__(timedelta(days=j)))
+            if len(strikes_a) > 1:
+                strikes_a.first().delete()
+
+
+def rewards_routine():
     print("--> Start Week Rewards")
     today = datetime.now()
     avatar_shiny = None
     avatar = None
+
     try:
         avatar = Avatar.objects.get(date=today, is_shiny=False)
     except Avatar.DoesNotExist as ex:
         print(ex)
+
     try:
         avatar_shiny = Avatar.objects.get(date=today, is_shiny=True)
     except Avatar.DoesNotExist as ex:

@@ -26,12 +26,14 @@ from professor import views as views_prof
 from turma import views as views_turma
 from user import views as views_user
 from avaliacao import views as views_aval
+from avatar import views as views_avatar
 
 router = routers.DefaultRouter()
 router.register(r'user', views_user.UserViewSet)
 router.register(r'login', views_user.LoginViewSet, basename='login')
 router.register(r'prof', views_prof.ProfessorViewSet)
 router.register(r'curso', views_curso.CursoViewSet)
+router.register(r'avatar', views_avatar.AvatarHasAlunoViewSet)
 router.register(r'aluno', views_aluno.AlunoViewSet)
 router.register(r'aulas', views_aulas.AulaViewSet)
 router.register(r'turmas', views_turma.TurmaViewSet)

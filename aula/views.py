@@ -210,18 +210,13 @@ def put_class_end(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_professor_class_open(request):
-    token = Token.objects.get(key=request.auth)
-    user = User.objects.get(pk=token.user.pk)
-    prof = Professor.objects.get(user=user)
-    turmas = ProfessorHasTurma.objects.filter(professor=prof).values('turma')
-
     context = {"aulas": []}
 
     serializer_context = {
         'request': request,
     }
 
-    aulas = Aula.objects.filter(turma__in=turmas, is_aberta_class=True, is_assincrona=False).order_by('dia_horario')
+    aulas = Aula.objects.filter(turma__professorhasturma__professor__user=request.user, is_aberta_class=True, is_assincrona=False).order_by('dia_horario')
     context['aulas'] = AulaSerializer(aulas, many=True, context=serializer_context).data
     return Response({'status': True, **context})
 

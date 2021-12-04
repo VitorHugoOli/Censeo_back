@@ -21,7 +21,7 @@ class AlunoSerializer(serializers.HyperlinkedModelSerializer):
     def data(self):
         ret = super().data
         try:
-            perfilPhoto = AvatarHasAluno.objects.get(aluno=self.instance).avatar.url
+            perfilPhoto = AvatarHasAluno.objects.get(aluno=self.instance, is_active=True).avatar.url
         except AvatarHasAluno.DoesNotExist:
             perfilPhoto = None
         ret.update({"perfilPhoto": perfilPhoto})

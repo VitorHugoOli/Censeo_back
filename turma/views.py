@@ -1,5 +1,6 @@
 # Create your views here.
 import random
+import decimal
 from datetime import datetime, timedelta
 
 import dateutil.parser
@@ -14,7 +15,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from Utils.Enums import tipo_qualificativo
+from Utils.Enums import tipo_qualificativo, relevancia_points
 from Utils.Except import generic_except
 from Utils.Parsers import dayToEnum
 from Utils.SetInterval import set_interval
@@ -398,10 +399,26 @@ class SugestaoTurmaViewSet(viewsets.ModelViewSet):
             else:
                 aluno = Aluno.objects.get(user=request.user)
                 sug = SugestaoTurma.objects.filter(turma=kwargs['pk'], aluno=aluno)
-            sug = sug.order_by('-data')
+            sug = sug.order_by('relevancia','data')
 
             return Response({"status": True,
                              'suguestoes': self.serializer_class(sug, many=True).data})
+        except Exception as ex:
+            return generic_except(ex)
+
+    def update(self, request, *args, **kwargs):
+        try:
+            id = kwargs['pk']
+            relevance = request.data['relevance']
+            sug = SugestaoTurma.objects.get(id=id)
+            aluno = AlunoHasTurma.objects.get(aluno=sug.aluno, turma_id=sug.turma)
+            if sug.relevancia is not None:
+                aluno.xp -= decimal.Decimal(relevancia_points[sug.relevancia])
+            sug.relevancia = relevance
+            sug.save()
+            aluno.xp += decimal.Decimal(relevancia_points[relevance])
+            aluno.save()
+            return Response({"status": True})
         except Exception as ex:
             return generic_except(ex)
 

@@ -138,8 +138,7 @@ class LoginViewSet(viewsets.ViewSet):
                     else:
                         return Response({'status': False, 'error': 'Senha incorreta.'})
                 except ObjectDoesNotExist as ex:
-                    print(ex)
-                    return generic_except(ex)
+                    return Response({'status': False, 'error': 'Usuário não existe.'})
                 except Exception as ex:
                     return generic_except(ex)
 

@@ -1,3 +1,5 @@
+from Utils.Pontos import PONTOS_AVALIACAO
+
 tipo_aula = (
     ('teorica', 'teorica'),
     ('prova', 'prova'),
@@ -26,6 +28,12 @@ tipo_relevancia = (
     ('media', 'media'),
     ('alta', 'alta')
 )
+
+relevancia_points = {
+    'baixa': PONTOS_AVALIACAO * 0.2,
+    'media': PONTOS_AVALIACAO * 0.5,
+    'alta': PONTOS_AVALIACAO
+}
 
 tipo_qualificativo = (
     ('perfeita', 'perfeita'),
