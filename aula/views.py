@@ -1,11 +1,12 @@
 # Create your views here.
 import json
+import timeit
 import traceback
 from datetime import timedelta, datetime
 
 import dateutil.parser
 import unidecode as unidecode
-from django.db.models import Count, QuerySet
+from django.db.models import Count, QuerySet, Q
 from pytz import timezone
 from rest_framework import viewsets, permissions
 from rest_framework.authtoken.models import Token
@@ -144,9 +145,10 @@ def retrieve_aula_from_turma(request: Request, id: int):
         'trabalho': TrabalhoPratico,
         'excursao': Excursao
     }
-    aulas = Aula.objects.filter(turma__aula__id=id,end_time__isnull=not request.query_params.__contains__('is_end')).order_by('-end_time')
+    aulas = Aula.objects.filter(turma__aula__id=id, end_time__isnull=not request.query_params.__contains__('is_end')).order_by('-end_time')
     dict_aulas = AulaSerializer(aulas, many=True).data
     aulas_json = json.loads(json.dumps(dict_aulas))
+
     for i in aulas_json:
         tipo = i['tipo_aula']
         if (tipo is not None or tipo != 'teorica') and (type_obj.__contains__(tipo)):
@@ -155,6 +157,7 @@ def retrieve_aula_from_turma(request: Request, id: int):
                 i['extra'] = obj.toDict()
             except Exception as ex:
                 print(ex)
+
     return Response({"status": True, "aulas": aulas_json})
 
 
@@ -226,16 +229,12 @@ def get_professor_class_open(request):
 def get_aluno_class_open(request):
     try:
         context = {}
-        token = Token.objects.get(key=request.auth)
-        user = User.objects.get(pk=token.user.pk)
-        aluno = Aluno.objects.get(user=user)
-        turmas = AlunoHasTurma.objects.filter(aluno=aluno).values('turma')
-        aulas: QuerySet[Aula] = Aula.objects.filter(turma__in=turmas, is_aberta_class=False, is_aberta_avaliacao=True)
-        aulas_remove = Avaliacao.objects.filter(aula__in=aulas, aluno=aluno, completa=True).values_list('aula_id',
-                                                                                                        flat=True)
-        aulas_clean = aulas.exclude(id__in=aulas_remove)
 
-        context['aulas'] = AulaSerializer(aulas_clean, many=True).data
+        aulas: QuerySet[Aula] = Aula.objects.filter(turma__alunohasturma__aluno__user=request.user, is_aberta_class=False, is_aberta_avaliacao=True).filter(
+            Q(avaliacao__completa=False) | Q(avaliacao__completa=None))
+
+        context['aulas'] = AulaSerializer(aulas, many=True).data
+
         return Response({'status': True, **context})
     except Exception as ex:
         print(ex.args)

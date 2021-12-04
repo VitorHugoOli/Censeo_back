@@ -101,10 +101,9 @@ def init_prof_has_turma():
 
 def init_fixed_days():
     try:
-        day_fixed = {"CCF131": [['SEG', '2020-07-18 07:50:00', 'REMOTA', '1', False], ['QUA', '2020-07-18 07:50:00', 'REMOTA', '1', False]],
-                     "CCF212": [['TER', '2020-07-18 07:50:00', 'REMOTA', '1', False], ['QUI', '2020-07-18 07:50:00', 'REMOTA', '1', False],
-                                ['QUI', '2020-07-18 09:50:00', 'REMOTA', '1', False]],
-                     "CCF355": [['SEG', '2020-07-18 14:50:00', 'REMOTA', '1', False], ['QUA', '2020-07-18 12:50:00', 'REMOTA', '1', False]]}
+        day_fixed = {"CCF221": [['SEG', '2020-12-06 09:50:00', 'REMOTA', '1', False], ['QUA', '2020-12-06 12:50:00', 'REMOTA', '1', False]],
+                     "CCF322": [['SEG', '2020-12-06 12:50:00', 'REMOTA', '1', False], ['QUA', '2020-12-06 14:50:00', 'REMOTA', '1', False]],
+                     "CCF211": [['TER', '2020-12-06 09:50:00', 'REMOTA', '1', False], ['QUI', '2020-12-06 09:50:00', 'REMOTA', '1', False]]}
         for i, days in day_fixed.items():
             turma = Turma.objects.get(codigo=i)
             for dia, horario, sala, to_end, is_async in days:

@@ -430,6 +430,7 @@ def pupils_list(request: Request, id: int):
         try:
             alunos_turma: QuerySet[AlunoHasTurma] = AlunoHasTurma.objects.filter(turma_id=id)
             alunos = []
+            # Todo: Criar query para melhor velocidade
             for i in alunos_turma:
                 aluno = Aluno.objects.get(id=i.aluno_id)
                 data = AlunoSerializer(aluno).data
