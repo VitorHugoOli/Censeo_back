@@ -145,7 +145,14 @@ def retrieve_aula_from_turma(request: Request, id: int):
         'trabalho': TrabalhoPratico,
         'excursao': Excursao
     }
-    aulas = Aula.objects.filter(turma__aula__id=id, end_time__isnull=not request.query_params.__contains__('is_end')).order_by('-end_time')
+
+    aulas = None
+
+    if (request.query_params.__contains__('is_end')):
+        aulas = Aula.objects.filter(turma__id=id, end_time__isnull=False).order_by('-end_time')
+    else:
+        aulas = Aula.objects.filter(turma__id=id)
+
     dict_aulas = AulaSerializer(aulas, many=True).data
     aulas_json = json.loads(json.dumps(dict_aulas))
 
