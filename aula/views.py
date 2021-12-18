@@ -7,6 +7,7 @@ from datetime import timedelta, datetime
 import dateutil.parser
 import unidecode as unidecode
 from django.db.models import Count, QuerySet, Q
+from django.http import JsonResponse
 from pytz import timezone
 from rest_framework import viewsets, permissions
 from rest_framework.authtoken.models import Token
@@ -41,7 +42,7 @@ class AulaViewSet(viewsets.ModelViewSet):
     }
 
     @staticmethod
-    def createTypeObj(aula, extra, tipo):
+    def create_type_obj(aula, extra, tipo):
         type_build = {
             'teorica': Teorica(aula=aula).save,
             'prova': Prova(aula=aula, quant_questao=extra).save,
@@ -103,7 +104,7 @@ class AulaViewSet(viewsets.ModelViewSet):
                 if aula.tipo_aula is not None:
                     self.TYPE_OBJ[aula_tipo].objects.get(aula=aula).delete()
                 aula.tipo_aula = tipo
-                self.createTypeObj(aula, data['extra'], tipo)
+                self.create_type_obj(aula, data['extra'], tipo)
             elif aula.tipo_aula is not None:
                 self.checkExtra(aula, data['extra'], tipo)
 
@@ -148,7 +149,7 @@ def retrieve_aula_from_turma(request: Request, id: int):
 
     aulas = None
 
-    if (request.query_params.__contains__('is_end')):
+    if request.query_params.__contains__('is_end'):
         aulas = Aula.objects.filter(turma__id=id, end_time__isnull=False).order_by('-end_time')
     else:
         aulas = Aula.objects.filter(turma__id=id)
@@ -164,7 +165,6 @@ def retrieve_aula_from_turma(request: Request, id: int):
                 i['extra'] = obj.toDict()
             except Exception as ex:
                 print(ex)
-
     return Response({"status": True, "aulas": aulas_json})
 
 

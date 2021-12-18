@@ -43,7 +43,7 @@ def initFacu():
 
 def initProfs():
     try:
-        profs = [["daniel", "0001", "danielmendes@ufv.br"], ["glaucia", "0002", "glaucia@ufv.br"], ["thais", "0003", "thais.braga@ufv.br"]]
+        profs = [["Daniel Mendes Barbosa", "0001", "danielmendes@ufv.br"], ["Gláucia Braga e Silva", "0002", "glaucia@ufv.br"], ["Thais Regina", "0003", "thais.braga@ufv.br"]]
         for nome, matricula, email in profs:
             user = User.objects.get_or_create(nome=nome, matricula=matricula, email=email)[0]
             user.tipo_user = 1
@@ -107,10 +107,8 @@ def init_fixed_days():
         for i, days in day_fixed.items():
             turma = Turma.objects.get(codigo=i)
             for dia, horario, sala, to_end, is_async in days:
-                dias = DiasFixos.objects.get_or_create(dia=dia, horario=datetime.strptime(horario, "%Y-%m-%d %H:%M:%S"), sala=sala, days_to_end=to_end, is_assincrona=is_async,
-                                                       turma=turma)[0]
-                # Todo: Precisa do save ?
-                # dias.save()
+                DiasFixos.objects.get_or_create(dia=dia, horario=datetime.strptime(horario, "%Y-%m-%d %H:%M:%S"), sala=sala, days_to_end=to_end, is_assincrona=is_async,
+                                                turma=turma)
         print("Dias_fixos criado com sucesso \\o/")
     except Exception as ex:
         raise Exception("xHouve algum erro ao criar os horarios fixos das turmas!\n" + repr(ex))
@@ -119,7 +117,7 @@ def init_fixed_days():
 def init_alunos(curso):
     try:
         init_path = "../Dados_mock/"
-        turmas = ["CCF131.csv", "CCF212.csv", "CCF355.csv"]
+        turmas = ["CCF221.csv", "CCF322.csv", "CCF211.csv"]
 
         for i in turmas:
             data = pd.read_csv(init_path + i)

@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import dateutil.parser
 import pytz
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import QuerySet, Avg
+from django.db.models import QuerySet, Avg, Q
 from pytz import timezone
 from rest_framework import viewsets, permissions
 from rest_framework.authtoken.models import Token
@@ -21,7 +21,7 @@ from Utils.Parsers import dayToEnum
 from Utils.SetInterval import set_interval
 from aluno.models import Aluno
 from aluno.serializers import AlunoSerializer
-from aula.models import Aula
+from aula.models import Aula, Teorica
 from avaliacao.models import Avaliacao, Caracteristica, Resposta
 from avatar.models import AvatarHasAluno, Avatar
 from curso.models import Disciplina
@@ -399,7 +399,7 @@ class SugestaoTurmaViewSet(viewsets.ModelViewSet):
             else:
                 aluno = Aluno.objects.get(user=request.user)
                 sug = SugestaoTurma.objects.filter(turma=kwargs['pk'], aluno=aluno)
-            sug = sug.order_by('relevancia','data')
+            sug = sug.order_by('relevancia', 'data')
 
             return Response({"status": True,
                              'suguestoes': self.serializer_class(sug, many=True).data})
@@ -439,7 +439,7 @@ def pupils_list(request: Request, id: int):
                 if avatar_aluno:
                     data['perfilPhoto'] = avatar_aluno.avatar.url
                 alunos.append(data)
-
+            print(alunos)
             return Response({"status": True, "alunos": alunos})
         except ObjectDoesNotExist as ex:
             print(">>> Wasn't Possible find the Turma")
@@ -450,28 +450,54 @@ def pupils_list(request: Request, id: int):
         return generic_except(ex)
 
 
-def checkTimeForOpenClass():
-    print("---> Checking for open class " + datetime.now().ctime())
+def check_time_for_open_class():
+    diferenca = timezone('America/Sao_Paulo')
+    print("---> Checking class " + datetime.now().astimezone(diferenca).ctime())
     try:
-        diferenca = timezone('America/Sao_Paulo')
-        querry = Aula.objects.all()
+        query = Aula.objects.all()
         today = datetime.now().astimezone(diferenca)
-        aulas: QuerySet[Aula] = querry.filter(dia_horario__year=today.year, dia_horario__month=today.month,
-                                              dia_horario__day=today.day,
-                                              dia_horario__hour=today.hour, dia_horario__minute=today.minute)
-        for i in aulas:
-            if i.is_assincrona:
-                i.is_aberta_avaliacao = True
-            else:
-                i.is_aberta_class = True
-            i.save()
+        aulas: QuerySet[Aula] = query.filter(dia_horario__year=today.year, dia_horario__month=today.month,
+                                             dia_horario__day=today.day,
+                                             dia_horario__hour=today.hour, dia_horario__minute=today.minute)
 
-        aulas_async: QuerySet[Aula] = querry.filter(is_assincrona=True, end_time__year=today.year,
-                                                    end_time__month=today.month,
-                                                    end_time__day=today.day)
+        # Check the sync class that need to be open for the professor
+        aulas.filter(is_assincrona=False).update(is_aberta_class=True)
 
-        aulas_async.update(is_aberta_avaliacao=False, is_aberta_class=False)
+        # Check async class that need to be open to avaliation
+        async_class = aulas.filter(is_assincrona=True)
+        check_tema_tipo(async_class, today, sync=False)
+        async_class.update(is_aberta_avaliacao=True, is_aberta_class=False)
+
+        # Check sync class that need to be open to avaliation
+        will_open_aval: QuerySet[Aula] = query.filter(is_aberta_class=True, is_assincrona=False, dia_horario__year=today.year, dia_horario__month=today.month,
+                                                      dia_horario__day=today.day,
+                                                      dia_horario__hour=(today - timedelta(hours=2)).hour, dia_horario__minute=today.minute)
+
+        check_tema_tipo(will_open_aval, today, sync=True)
+
+        will_open_aval.update(is_aberta_avaliacao=True, is_aberta_class=False, end_time=datetime.now().astimezone(diferenca))
+
+        # Check sync and async class that need to be end
+        # Closes any classes in 7 days
+        will_end_class: QuerySet[Aula] = query.filter(Q(dia_horario__year=today.year, dia_horario__month=today.month, dia_horario__day=(today - timedelta(days=7)).day,
+                                                        dia_horario__hour=today.hour, dia_horario__minute=today.minute) |
+                                                      Q(end_time__year=today.year, end_time__month=today.month, end_time__day=today.day,
+                                                        end_time__hour=today.hour, end_time__minute=today.minute),
+                                                      is_aberta_avaliacao=True)
+
+        will_end_class.filter(is_assincrona=True, end_time__isnull=True).update(end_time=today)
+        will_end_class.update(is_aberta_avaliacao=False, is_aberta_class=False)
+
         print("---> Verification successful")
     except Exception as ex:
-        print("---x Não foi possivel checar todas as aulas!")
+        print("---x Não foi possivel checar todas as aulas")
         print(ex)
+
+
+def check_tema_tipo(classes, today, sync=True):
+    # Check if the class that will be open to evaluation have a tema and tipo, in toher way, it's create a tema and tipo for the class
+    classes.filter(Q(tema__isnull=True) | Q(tema='')).update(tema=f'Aula {"Sincrona" if sync else "Assincrona"} - {str(today.day)}/{str(today.month)}')
+    classes_teo = classes.filter(Q(tipo_aula__isnull=True) | Q(tipo_aula=''))
+    teo_list_create = [Teorica(aula=i) for i in classes_teo]
+    teo = Teorica.objects.bulk_create(teo_list_create)
+    classes_teo.update(tipo_aula='teorica')
