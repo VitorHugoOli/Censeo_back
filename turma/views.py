@@ -205,17 +205,18 @@ class DiasFixosViewSet(viewsets.ModelViewSet):
         try:
             if "idTurma" in data and "schedules" in data:
                 turma = Turma.objects.get(id=data["idTurma"])
-                fixedDays = DiasFixos.objects.filter(turma=turma).values_list('id', flat=True)
-                scheduleReceived: list = data['schedules']
-                for i in fixedDays:
+                fixed_days = DiasFixos.objects.filter(turma=turma).values_list('id', flat=True)
+                schedule_received: list = data['schedules']
+
+                for i in fixed_days:
                     is_active = False
-                    for j in scheduleReceived:
+                    for j in schedule_received:
                         if i == j['id']:
                             is_active = True
                     if not is_active:
                         DiasFixos.objects.get(id=i).delete()
 
-                for i in scheduleReceived:
+                for i in schedule_received:
                     id = i['id']
                     if id is None:
                         dia = DiasFixos(
@@ -228,7 +229,7 @@ class DiasFixosViewSet(viewsets.ModelViewSet):
                         if dia.is_assincrona:
                             dia.days_to_end = i['days_to_end']
                         dia.save()
-                    elif id in fixedDays:
+                    elif id in fixed_days:
                         dia: DiasFixos = DiasFixos.objects.get(id=id)
                         aulas: QuerySet[Aula] = Aula.objects.filter(turma=turma,
                                                                     sala=dia.sala,

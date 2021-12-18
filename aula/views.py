@@ -112,7 +112,7 @@ class AulaViewSet(viewsets.ModelViewSet):
             aula.is_assincrona = data['is_assincrona']
             aula.descricao = data['descricao']
             aula.link_documento = data['link']
-            if aula.is_assincrona:
+            if aula.is_assincrona and 'end_time' in data and data['end_time'] != "":
                 aula.end_time = dateutil.parser.parse(data['end_time'])
             aula.save()
             return Response({'status': True})
@@ -123,14 +123,17 @@ class AulaViewSet(viewsets.ModelViewSet):
         try:
             id_aula = kwargs['pk']
             aula = Aula.objects.get(id=id_aula)
-            if aula.tipo_aula == 'teorica':
-                Teorica.objects.get(aula=aula).delete()
-            elif aula.tipo_aula == 'prova':
-                Prova.objects.get(aula=aula).delete()
-            elif aula.tipo_aula == 'trabalho':
-                TrabalhoPratico.objects.get(aula=aula).delete()
-            elif aula.tipo_aula == 'excursao':
-                Excursao.objects.get(aula=aula).delete()
+            try:
+                if aula.tipo_aula == 'teorica':
+                    Teorica.objects.get(aula=aula).delete()
+                elif aula.tipo_aula == 'prova':
+                    Prova.objects.get(aula=aula).delete()
+                elif aula.tipo_aula == 'trabalho':
+                    TrabalhoPratico.objects.get(aula=aula).delete()
+                elif aula.tipo_aula == 'excursao':
+                    Excursao.objects.get(aula=aula).delete()
+            except Exception as ex:
+                pass
             aula.delete()
             return Response({'status': True})
         except Exception as ex:
@@ -206,11 +209,17 @@ def create_aulas(dias_fixos: DiasFixos):
 @permission_classes([IsAuthenticated])
 def put_class_end(request):
     try:
+        diferenca = timezone('America/Sao_Paulo')
+        today = datetime.now().astimezone(diferenca)
         aula = Aula.objects.get(id=request.data['id'])
+        if aula.tipo_aula is None or aula.tipo_aula == '':
+            aula.tipo_aula = 'teorica'
+            Teorica.objects.create(aula=aula)
+        if aula.tema is None or aula.tema == '':
+            aula.tema = f'Aula Sincrona - {str(today.day)}/{str(today.month)}'
         aula.is_aberta_avaliacao = True
         aula.is_aberta_class = False
-        diferenca = timezone('America/Sao_Paulo')
-        aula.end_time = datetime.now().astimezone(diferenca)
+        aula.end_time = today
         aula.save()
         return Response({'status': True})
     except Exception as ex:
