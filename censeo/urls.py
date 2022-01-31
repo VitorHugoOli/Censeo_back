@@ -59,6 +59,7 @@ urlpatterns = [
     path('turmas/<int:id>/alunos', views_turma.pupils_list),
     path('turmasStats/', views_turma.list_turma_stats),
     path('turmasStats/<int:id>', views_turma.turma_stats),
+    path('pushtoken', views_user.push_token),
     path('admin/', admin.site.urls),
     url(r'^api-auth/', include('rest_framework.urls'))
 ]

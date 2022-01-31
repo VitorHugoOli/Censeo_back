@@ -1,16 +1,13 @@
 # Create your views here.
 import json
-import timeit
 import traceback
 from datetime import timedelta, datetime
 
 import dateutil.parser
 import unidecode as unidecode
 from django.db.models import Count, QuerySet, Q
-from django.http import JsonResponse
 from pytz import timezone
 from rest_framework import viewsets, permissions
-from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
@@ -18,13 +15,10 @@ from rest_framework.response import Response
 
 from Utils.CalcPeriodos import dayToNumber
 from Utils.Except import generic_except
-from aluno.models import Aluno
 from aula.models import Aula, Prova, Teorica, Excursao, TrabalhoPratico
 from aula.serializers import AulaSerializer
-from avaliacao.models import Avaliacao
-from professor.models import Professor
-from turma.models import DiasFixos, ProfessorHasTurma, Turma, AlunoHasTurma
-from user.models import User
+from turma.models import DiasFixos, Turma, AlunoHasTurma
+from user.views import send_push
 
 
 class AulaViewSet(viewsets.ModelViewSet):
@@ -221,6 +215,7 @@ def put_class_end(request):
         aula.is_aberta_class = False
         aula.end_time = today
         aula.save()
+        send_push_end_class(aula)
         return Response({'status': True})
     except Exception as ex:
         return generic_except(ex)
@@ -254,3 +249,13 @@ def get_aluno_class_open(request):
         return Response({'status': True, **context})
     except Exception as ex:
         print(ex.args)
+
+
+def send_push_end_class(aula: Aula):
+    try:
+        alunos = AlunoHasTurma.objects.filter(turma=aula.turma, aluno__user__push_token__isnull=False)
+        registration_tokens = [i.aluno.user.push_token for i in alunos]
+        send_push(title=f"Aula finalizada - {aula.turma.codigo} ", body=f"Tema: {aula.tema}\nFinalizada ás: {aula.dia_horario.astimezone(timezone('America/Sao_Paulo')).strftime('%d/%m - %H:%M')}",
+                  registration_tokens=registration_tokens)
+    except Exception as ex:
+        print(ex)

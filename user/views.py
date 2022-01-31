@@ -5,8 +5,9 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.db import IntegrityError
 # Create your views here.
+from firebase_admin import messaging
 from rest_framework import viewsets
-from rest_framework.decorators import permission_classes
+from rest_framework.decorators import permission_classes, api_view
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -168,3 +169,37 @@ class LoginViewSet(viewsets.ViewSet):
                 return Response({'status': False, 'error': 'Nenhum username correspondente.'})
         except Exception as ex:
             return generic_except(ex)
+
+
+@api_view(['POST', 'GET'])
+@permission_classes([IsAuthenticated])
+def push_token(request):
+    try:
+        user = request.user
+        if request.method == 'POST':
+            data = request.data
+            if 'token' in data:
+                token = data['token']
+                user.push_token = token
+                user.save()
+                return Response({'status': True})
+            else:
+                return Response({'status': False, 'error': 'Token não informado'})
+        else:
+            if user.push_token:
+                return Response({'status': True, 'token': user.push_token})
+            else:
+                return Response({'status': False, 'error': 'Token não informado'})
+    except Exception as ex:
+        return generic_except(ex)
+
+
+def send_push(title, body, registration_tokens,*args, **kwargs):
+    try:
+        message = messaging.MulticastMessage(
+            notification=messaging.Notification(title=title, body=body),
+            tokens=registration_tokens)
+        response = messaging.send_multicast(message)
+        print('Successfully sent message:', response)
+    except Exception as ex:
+        print('Error sending message:', ex)

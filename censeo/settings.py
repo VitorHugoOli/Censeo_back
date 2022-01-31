@@ -18,6 +18,12 @@ import environ
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+import firebase_admin
+from firebase_admin import credentials
+
+cred = credentials.Certificate(BASE_DIR+"/censeo-1ea51-firebase-adminsdk-jwhry-e27d86ed73.json")
+firebase_admin.initialize_app(cred)
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
@@ -90,20 +96,20 @@ WSGI_APPLICATION = 'censeo.wsgi.application'
 
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'HOST': 'censeodatabase.chmamqydg3cz.sa-east-1.rds.amazonaws.com',
-        'USER': 'censeo',
-        'PASSWORD': '1c233n42560',
-        'NAME': 'censeo',
-    },
-
     # 'default': {
     #     'ENGINE': 'django.db.backends.mysql',
-    #     'OPTIONS': {
-    #         'read_default_file': "./my.cnf",
-    #     },
-    # }
+    #     'HOST': 'censeodatabase.chmamqydg3cz.sa-east-1.rds.amazonaws.com',
+    #     'USER': 'censeo',
+    #     'PASSWORD': '1c233n42560',
+    #     'NAME': 'censeo',
+    # },
+
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'OPTIONS': {
+            'read_default_file': "./my.cnf",
+        },
+    }
 }
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'

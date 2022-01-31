@@ -22,6 +22,7 @@ from Utils.SetInterval import set_interval
 from aluno.models import Aluno
 from aluno.serializers import AlunoSerializer
 from aula.models import Aula, Teorica
+from aula.views import send_push_end_class
 from avaliacao.models import Avaliacao, Caracteristica, Resposta
 from avatar.models import AvatarHasAluno, Avatar
 from curso.models import Disciplina
@@ -467,7 +468,11 @@ def check_time_for_open_class():
         # Check async class that need to be open to avaliation
         async_class = aulas.filter(is_assincrona=True)
         check_tema_tipo(async_class, today, sync=False)
+        async_class_push = list(async_class)
         async_class.update(is_aberta_avaliacao=True, is_aberta_class=False)
+
+        for i in async_class_push:
+            send_push_end_class(i)
 
         # Check sync class that need to be open to avaliation
         will_open_aval: QuerySet[Aula] = query.filter(is_aberta_class=True, is_assincrona=False, dia_horario__year=today.year, dia_horario__month=today.month,
@@ -476,7 +481,11 @@ def check_time_for_open_class():
 
         check_tema_tipo(will_open_aval, today, sync=True)
 
+        will_open_aval_push = list(will_open_aval)
         will_open_aval.update(is_aberta_avaliacao=True, is_aberta_class=False, end_time=datetime.now().astimezone(diferenca))
+
+        for i in will_open_aval_push:
+            send_push_end_class(i)
 
         # Check sync and async class that need to be end
         # Closes any classes in 7 days
