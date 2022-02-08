@@ -27,7 +27,6 @@ class AvatarHasAlunoViewSet(viewsets.ModelViewSet):
                 avatar_select.is_active = False
                 avatar_select.save()
 
-            print(data['avatar_id']);
             if data['avatar_id'] is not None:
                 avatar = AvatarHasAluno.objects.filter(aluno__user=request.user, avatar_id=data['avatar_id']).first()
                 avatar.is_active = True

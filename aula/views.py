@@ -17,6 +17,7 @@ from Utils.CalcPeriodos import dayToNumber
 from Utils.Except import generic_except
 from aula.models import Aula, Prova, Teorica, Excursao, TrabalhoPratico
 from aula.serializers import AulaSerializer
+from avaliacao.models import Avaliacao
 from turma.models import DiasFixos, Turma, AlunoHasTurma
 from user.views import send_push
 
@@ -190,7 +191,7 @@ def create_aulas(dias_fixos: DiasFixos):
                         turma=dias_fixos.turma
                     )
                     if dias_fixos.is_assincrona:
-                        aula.end_time = aula.dia_horario + timedelta(days=dias_fixos.days_to_end)
+                        aula.end_time = aula.dia_horario + timedelta(days=int(dias_fixos.days_to_end))
                     aula.save()
         else:
             raise Exception("Sorry, but the day passed is incorrect day: " + dias_fixos.dia.__str__())
@@ -241,8 +242,13 @@ def get_aluno_class_open(request):
     try:
         context = {}
 
-        aulas: QuerySet[Aula] = Aula.objects.filter(turma__alunohasturma__aluno__user=request.user, is_aberta_class=False, is_aberta_avaliacao=True).filter(
-            Q(avaliacao__completa=False) | Q(avaliacao__completa=None))
+        aulas: QuerySet[Aula] = Aula.objects.filter(turma__alunohasturma__aluno__user=request.user, is_aberta_class=False, is_aberta_avaliacao=True)
+
+        # Get all the aulas that the user complete the evaluation
+        aulas_eval = Avaliacao.objects.filter(aluno__user=request.user, aula__in=aulas, completa=True).values_list('aula')
+
+        # Remove all the aulas that the user complete the evaluation
+        aulas = aulas.exclude(id__in=aulas_eval)
 
         context['aulas'] = AulaSerializer(aulas, many=True).data
 
@@ -255,7 +261,8 @@ def send_push_end_class(aula: Aula):
     try:
         alunos = AlunoHasTurma.objects.filter(turma=aula.turma, aluno__user__push_token__isnull=False)
         registration_tokens = [i.aluno.user.push_token for i in alunos]
-        send_push(title=f"Aula finalizada - {aula.turma.codigo} ", body=f"Tema: {aula.tema}\nFinalizada ás: {aula.dia_horario.astimezone(timezone('America/Sao_Paulo')).strftime('%d/%m - %H:%M')}",
+        send_push(title=f"Aula finalizada - {aula.turma.codigo} ",
+                  body=f"Tema: {aula.tema}\nFinalizada ás: {aula.dia_horario.strftime('%d/%m - %H:%M')}",
                   registration_tokens=registration_tokens)
     except Exception as ex:
         print(ex)

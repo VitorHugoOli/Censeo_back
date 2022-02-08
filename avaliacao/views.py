@@ -35,11 +35,8 @@ class AvaliacaoViewSet(viewsets.ModelViewSet):
         data: dict = request.data
         try:
             if data.__contains__('aulaId'):
-
                 aula = Aula.objects.get(id=data['aulaId'])
-                token = Token.objects.get(key=request.auth)
-                user = User.objects.get(pk=token.user.pk)
-                aluno = Aluno.objects.get(user=user)
+                aluno = Aluno.objects.get(user=request.user)
                 resp = None
                 try:
                     aval = Avaliacao.objects.get(aula=aula, aluno=aluno)

@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 import dateutil.parser
 import pytz
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import connection
 from django.db.models import QuerySet, Avg, Q
 from pytz import timezone
 from rest_framework import viewsets, permissions
@@ -164,7 +165,6 @@ def _turma_stats(context, id, aluno_id):
         context[label] = {}
 
         if aluno_id is not None:
-            print("Bingo")
             respostas = Resposta.objects.filter(avaliacao__aula__turma__id=id, pergunta__caracteristica=j, tipo_resposta='qualificativa', avaliacao__aluno__id=aluno_id)
         else:
             respostas = Resposta.objects.filter(avaliacao__aula__turma__id=id, pergunta__caracteristica=j, tipo_resposta='qualificativa')
@@ -429,25 +429,37 @@ class SugestaoTurmaViewSet(viewsets.ModelViewSet):
 @permission_classes([IsAuthenticated])
 def pupils_list(request: Request, id: int):
     try:
-        try:
-            alunos_turma: QuerySet[AlunoHasTurma] = AlunoHasTurma.objects.filter(turma_id=id)
-            alunos = []
-            # Todo: Criar query para melhor velocidade
-            for i in alunos_turma:
-                aluno = Aluno.objects.get(id=i.aluno_id)
-                data = AlunoSerializer(aluno).data
-                data['xp'] = i.xp
-                avatar_aluno: AvatarHasAluno = AvatarHasAluno.objects.filter(aluno=aluno, is_active=True).first()
-                if avatar_aluno:
-                    data['perfilPhoto'] = avatar_aluno.avatar.url
-                alunos.append(data)
-            print(alunos)
-            return Response({"status": True, "alunos": alunos})
-        except ObjectDoesNotExist as ex:
-            print(">>> Wasn't Possible find the Turma")
-            return Response({"status": False, "message": "Não foi possivel achar a turma"})
+        cursor = connection.cursor()
+        cursor.execute(f"""
+                    select Aluno.id, AhT.XP,Curso_idCurso, Avatar.url, u.id as user_id, u.nome, u.matricula, u.username, u.email, u.first_time, u.tipo_user
+                    from Aluno
+                    INNER JOIN User U on Aluno.User_id = U.id
+                    inner JOIN Aluno_has_Turma AhT on Aluno.id = AhT.Aluno_id
+                    LEFT JOIN (select * from Avatar_has_Aluno inner join Avatar A on Avatar_has_Aluno.Avatar_id = A.id where is_active=true) Avatar on Aluno.id = Avatar.Aluno_id
+                    WHERE Turma_id = {id}
+                    ORDER BY U.matricula
+                    """)
+        rows = cursor.fetchall()
+        context = []
+        for row in rows:
+            user = {
+                'id': row[4],
+                'nome': row[5],
+                'matricula': row[6],
+                'username': row[7],
+                'email': row[8],
+                'first_time': row[9] == 1 and True or False,
+                'type': row[10]
+            }
+            context.append({
+                'id': row[0],
+                'xp': row[1],
+                'curso': row[2],
+                'perfilPhoto': row[3],
+                'user_u': user
+            })
 
-
+        return Response({"status": True, "alunos": context})
     except Exception as ex:
         return generic_except(ex)
 
